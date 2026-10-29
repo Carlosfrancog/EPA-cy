@@ -7,5 +7,6 @@ Registros aceitos como *diretrizes*, não como alegações de implementação.
 - [ADR-003 — EPA Sentinel: confiança progressiva](003-sentinel-trust.md)
 - [ADR-004 — Workers isolados e contrato distribuível](004-worker-isolation.md)
 - [ADR-005 — Imutabilidade e quarentena](005-artifact-lifecycle.md)
+- [ADR-006 — EPA Ledger: cadeia local de evidências](006-ledger-evidence.md)
 
 **Pendências:** banco operacional, credenciais de serviço, assinatura e gerenciamento de chaves, protocolo de publicação e retenção. São requisitos de projeto, não recursos existentes.
