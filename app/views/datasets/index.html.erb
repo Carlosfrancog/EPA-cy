@@ -1,0 +1,12 @@
+<% content_for :title, "Datasets" %><% content_for :section, "Datasets" %>
+<div class="page-heading"><div><div class="eyebrow">EPA GENESIS + ATLAS</div><h1>Datasets</h1><p>Catálogos curriculares e históricos longitudinais versionados.</p></div><span class="tag">SYNTHETIC ONLY</span></div>
+<div class="panel"><div class="panel-heading"><div><div class="eyebrow">REGISTRO LOCAL</div><h3>Histórico escolar demonstrativo</h3></div><span class="subtle-pill"><%= @manifest ? "MANIFESTO ENCONTRADO" : "NÃO GERADO" %></span></div>
+<% if @manifest %>
+<div class="dataset-metrics"><div><small>Registros declarados</small><strong><%= number_with_delimiter(@manifest["row_count"]) %></strong></div><div><small>Seed</small><strong><%= @manifest["generator_seed"] %></strong></div><div><small>Classificação</small><strong>Sintético</strong></div></div>
+<p class="muted">Digest declarado: <code><%= @manifest["digest"].to_s.first(32) %>…</code></p>
+<p class="muted">A presença deste manifesto não constitui prova de integridade. Execute a verificação no backend antes de confiar no arquivo.</p>
+<% else %>
+<div class="empty-state"><div class="empty-icon">◈</div><h3>Nenhum dataset gerado nesta instalação</h3><p>Gere uma amostra local pelo terminal. Esta tela apresentará o manifesto da geração.</p><pre><code>python -m epa.genesis.generate --output data/demo --students 100 --seed 20261029</code></pre></div>
+<% end %>
+</div>
+<div class="two-columns"><section class="panel"><div class="eyebrow">FORMATO ANALÍTICO</div><h3>DuckDB + Parquet</h3><p class="muted">Os históricos são gerados em formato columnar, adequados a consultas analíticas e versões rastreáveis.</p><div class="data-tags"><span>student_id</span><span>academic_year</span><span>grade_level</span><span>knowledge_area</span><span>final_grade</span><span>attendance_rate</span></div></section><section class="panel"><div class="eyebrow">LIMITES ATUAIS</div><h3>Catálogo demonstrativo</h3><p class="muted">As disciplinas da demonstração são ilustrativas. A importação e conferência das habilidades oficiais da BNCC ainda estão planejadas.</p><%= link_to "Ver componentes →", architecture_path, class: "text-link" %></section></div>

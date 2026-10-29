@@ -1,0 +1,21 @@
+<% content_for :title, "Experimentos" %><% content_for :section, "Experimentos" %>
+<div class="page-heading"><div><div class="eyebrow">EPA CORE ENGINE</div><h1>Experimentos</h1><p>Configure um benchmark de classificação longitudinal com dados sintéticos.</p></div><span class="tag">PROTOCOLO EXPERIMENTAL</span></div>
+<div class="two-columns experiment-layout"><section class="panel"><div class="panel-heading"><div><div class="eyebrow">NOVA CONFIGURAÇÃO</div><h3>Preparar experimento</h3></div></div>
+<%= form_with url: preview_experiment_path, method: :post, class: "experiment-form" do |f| %>
+<label for="model">Algoritmo</label><%= select_tag :model, options_for_select(@options.map { |key, value| [value, key] }, params[:model] || "random_forest"), id: "model", class: "input" %>
+<label for="seed">Seed de reprodução</label><%= number_field_tag :seed, params[:seed] || "20261029", min: 0, max: 999999999, id: "seed", class: "input", required: true %>
+<label>Dataset de entrada</label><div class="readonly-field">data/demo/academic_history.parquet <span>SYNTHETIC</span></div>
+<div class="info-inline">A configuração abaixo <strong>não inicia treinamento</strong>. Ela prepara um roteiro reproduzível para execução local do benchmark.</div>
+<%= f.submit "Preparar configuração →", class: "button button-primary button-wide" %>
+<% end %></section>
+<section class="panel"><div class="panel-heading"><div><div class="eyebrow">RESULTADO DA CONFIGURAÇÃO</div><h3>Plano de execução</h3></div></div>
+<% if @experiment %>
+<div class="success-note">✓ Configuração validada — nenhuma execução iniciada</div>
+<div class="detail-list"><div><span>Algoritmo selecionado</span><strong><%= @experiment[:model_label] %></strong></div><div><span>Seed</span><strong><%= @experiment[:seed] %></strong></div><div><span>Status</span><strong>Não executado</strong></div></div>
+<p class="muted">O CLI atual compara os três modelos no mesmo protocolo, independentemente do modelo destacado nesta tela.</p>
+<pre><code>python -m epa.core_engine.cli --dataset data/demo/academic_history.parquet --seed <%= @experiment[:seed] %> --output data/demo/report.json</code></pre>
+<% else %>
+<div class="empty-state"><div class="empty-icon">◇</div><h3>Pronto para configurar</h3><p>Selecione o algoritmo e a seed. Nenhum resultado será inventado ou exibido sem execução real.</p></div>
+<% end %>
+</section></div>
+<div class="panel slim-panel"><div class="eyebrow">SOBRE O PROTOCOLO</div><p>Predição experimental: média do ano seguinte ≥ 6. Separação por aluno, com pré-processamento ajustado somente no treino. <strong>Não é predição de evasão nem reprodução de M1/M2/M3.</strong></p></div>

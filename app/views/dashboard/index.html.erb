@@ -1,0 +1,23 @@
+<% content_for :title, "Visão geral" %>
+<% content_for :section, "Visão geral" %>
+<div class="page-heading"><div><div class="eyebrow">LABORATÓRIO EDUCACIONAL</div><h1>Visão geral</h1><p>Uma visão unificada da pesquisa, dos dados e dos mecanismos de integridade.</p></div><%= link_to "Configurar experimento ↗", experiments_path, class: "button button-primary" %></div>
+<div class="hero"><div><div class="hero-kicker">EPA RESEARCH PLATFORM <span class="hero-badge">ALPHA</span></div><h2>Pesquisa reproduzível.<br><em>Evidências verificáveis.</em></h2><p>Uma infraestrutura para estudar trajetórias escolares, comparar modelos e documentar cada decisão científica.</p><%= link_to "Explorar a arquitetura →", architecture_path, class: "hero-link" %></div><div class="hero-art" aria-hidden="true"><div class="orb orb-one"></div><div class="orb orb-two"></div><div class="orbit orbit-one"></div><div class="orbit orbit-two"></div><div class="orb-center">EPA</div></div></div>
+<div class="stats-grid">
+  <div class="stat-card"><div class="stat-label">Componentes mapeados</div><div class="stat-value">05</div><div class="stat-foot">Atlas · Genesis · Core · Sentinel · Ledger</div></div>
+  <div class="stat-card"><div class="stat-label">Modelos implementados</div><div class="stat-value">03</div><div class="stat-foot">Baselines experimentais em Python</div></div>
+  <div class="stat-card"><div class="stat-label">Dataset demo local</div><div class="stat-value"><%= @dataset ? "01" : "00" %></div><div class="stat-foot"><%= @dataset ? "Manifesto sintético encontrado" : "Aguardando geração via CLI" %></div></div>
+  <div class="stat-card"><div class="stat-label">Validação empírica</div><div class="stat-value">—</div><div class="stat-foot">Sem resultados reais homologados</div></div>
+</div>
+<div class="two-columns">
+<section class="panel"><div class="panel-heading"><div><div class="eyebrow">FLUXO DE PESQUISA</div><h3>Pipeline experimental</h3></div><span class="subtle-pill">VISÃO CONCEITUAL</span></div><div class="pipeline">
+  <div class="pipeline-step"><span class="step-number">01</span><div><strong>EPA ATLAS</strong><small>Referências curriculares e catálogo versionado</small></div><span class="step-status">Demo</span></div>
+  <div class="pipeline-step"><span class="step-number">02</span><div><strong>EPA GENESIS</strong><small>Históricos escolares sintéticos em Parquet</small></div><span class="step-status">Protótipo</span></div>
+  <div class="pipeline-step"><span class="step-number">03</span><div><strong>EPA CORE ENGINE</strong><small>Features e baselines longitudinais</small></div><span class="step-status">Protótipo</span></div>
+  <div class="pipeline-step"><span class="step-number">04</span><div><strong>SENTINEL + LEDGER</strong><small>Verificações e trilha de auditoria</small></div><span class="step-status">Parcial</span></div>
+</div></section>
+<section class="panel"><div class="panel-heading"><div><div class="eyebrow">ESTADO DA PLATAFORMA</div><h3>O que já pode ser explorado</h3></div></div><div class="quick-links">
+  <%= link_to datasets_path, class: "quick-link" do %><span>◈</span><div><strong>Datasets</strong><small>Inspecione a estrutura e a geração</small></div><b>→</b><% end %>
+  <%= link_to experiments_path, class: "quick-link" do %><span>◇</span><div><strong>Experimentos</strong><small>Configure uma execução demonstrativa</small></div><b>→</b><% end %>
+  <%= link_to integrity_path, class: "quick-link" do %><span>⬡</span><div><strong>Integridade</strong><small>Consulte as proteções implementadas</small></div><b>→</b><% end %>
+</div><div class="callout">A interface diferencia explicitamente <strong>funcionalidades implementadas</strong> de integrações e resultados ainda planejados.</div></section>
+</div>

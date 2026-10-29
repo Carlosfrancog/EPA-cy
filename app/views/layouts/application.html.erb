@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title><%= content_for?(:title) ? yield(:title) + " · EPA" : "EPA Research Platform" %></title>
+    <meta name="description" content="EduPredict Analytics — plataforma experimental de validação de modelos educacionais">
+    <%= csrf_meta_tags %>
+    <%= csp_meta_tag %>
+    <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
+    <%= javascript_importmap_tags %>
+  </head>
+  <body>
+    <div class="shell">
+      <aside class="sidebar">
+        <%= link_to root_path, class: "brand" do %>
+          <span class="brand-icon">E</span>
+          <span class="brand-name">EduPredict <small>RESEARCH PLATFORM</small></span>
+        <% end %>
+        <div class="nav-heading">WORKSPACE</div>
+        <nav aria-label="Navegação principal" class="navigation">
+          <% [["dashboard", "Visão geral", root_path], ["datasets", "Datasets", datasets_path], ["experiments", "Experimentos", experiments_path], ["models", "Modelos", models_path], ["integrity", "Integridade", integrity_path], ["architecture", "Arquitetura", architecture_path]].each do |key, title, path| %>
+            <%= link_to path, class: "nav-link #{active_section?(key) ? 'active' : ''}", aria: { current: active_section?(key) ? "page" : nil } do %>
+              <span class="nav-glyph" aria-hidden="true"><%= section_icon(key) %></span><span><%= title %></span>
+            <% end %>
+          <% end %>
+        </nav>
+        <div class="sidebar-bottom">
+          <div class="workspace-status"><span class="status-dot"></span> Laboratório experimental</div>
+          <div class="sidebar-caption">EPA-cy · Versão alpha 0.1<br>Somente dados sintéticos</div>
+        </div>
+      </aside>
+      <div class="main-column">
+        <header class="topbar">
+          <div class="breadcrumb">EPA <span>/</span> <strong><%= content_for?(:section) ? yield(:section) : "Visão geral" %></strong></div>
+          <div class="top-actions"><span class="environment-pill">● AMBIENTE DE PESQUISA</span><span class="avatar">EP</span></div>
+        </header>
+        <main class="main-content">
+          <% if flash[:alert] %><div role="alert" class="notice notice-error"><%= flash[:alert] %></div><% end %>
+          <%= yield %>
+        </main>
+        <footer class="footer">EduPredict Analytics · Protótipo de pesquisa · Dados e resultados não validados empiricamente</footer>
+      </div>
+    </div>
+  </body>
+</html>
