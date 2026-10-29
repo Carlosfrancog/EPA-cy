@@ -1,52 +1,37 @@
 # EduPredict Analytics — EPA Research Platform
 
-Plataforma de pesquisa para análise longitudinal e validação científica de modelos educacionais.
-
-> **Status:** fundação experimental v0.1. Não há modelos validados, proteções criptográficas implantadas nem garantias de segurança demonstradas.
+Plataforma de experimentação científica educacional. O repositório está em desenvolvimento; **não possui resultados científicos validados nem proteção para dados pessoais reais**.
 
 ## Componentes
 
-| Componente | Escopo |
-| --- | --- |
-| EPA ATLAS | Registro curricular e referências versionadas |
-| EPA GENESIS | Geração longitudinal de dados sintéticos |
-| EPA CORE ENGINE | Features, experimentos e modelos científicos |
-| EPA SENTINEL | Políticas de integridade e segurança de execução |
-| EPA LEDGER | Proveniência, auditoria e evidências |
+| Nome | Escopo | Implementação |
+| --- | --- | --- |
+| EPA ATLAS | Referências e matrizes curriculares versionadas | Validação de catálogo demo |
+| EPA GENESIS | Históricos escolares sintéticos longitudinais | Gerador experimental Parquet |
+| EPA CORE ENGINE | Modelos e avaliação | Planejado |
+| EPA SENTINEL | Verificações temporais e integridade | Protótipo |
+| EPA LEDGER | Cadeia local de auditoria | Protótipo |
 
-**Stack definida:** Rails + Hotwire (aplicação futura), Python científico, DuckDB + Parquet, MLflow. O banco operacional e a infraestrutura distribuída continuam sujeitos a ADR técnico.
+**Stack:** Python + DuckDB + Parquet; Rails + Hotwire e MLflow planejados para integrações posteriores.
 
-## Primeira entrega
-
-Este repositório contém a primeira fatia executável de **EPA SENTINEL**:
-
-- esquema de manifesto de entrada com digest SHA-256;
-- verificação da integridade de um arquivo;
-- verificação de dependências temporais declaradas;
-- regra fail-closed para evidência insuficiente;
-- decisão de política PERMIT / DENY / UNKNOWN;
-- testes automatizados.
-
-**Importante:** os manifestos atualmente não são assinados e suas dependências são autodeclaradas; um originador malicioso pode falsificar esses dados. Esta versão **não é uma barreira completa** nem deve processar dados pessoais reais.
-
-### Executar localmente
+## Execução rápida
 
 ```bash
-python -m pip install -e ".[dev]"
+python -m pip install -e ".[dev,research]"
 pytest -q
-python -m epa.sentinel.cli verify --manifest examples/manifest.sample.json --root .
+python -m epa.genesis.generate --output data/demo --students 100 --seed 20261029
 ```
 
-O exemplo tem um digest placeholder e, propositalmente, deve falhar até que seja apontado para um artefato real com digest calculado.
+`data/demo` conterá Parquet e manifesto SHA-256; outputs nunca são sobrescritos.
 
-## Documentação
+> A matriz em `examples/atlas.demo.json` é **inteiramente ilustrativa**. A BNCC orienta a estrutura, mas ainda não foi importada nem validada habilidade por habilidade. Não confundir esse exemplo com um currículo MEC verificado.
+
+## Referências internas
 
 - [Catálogo de componentes](docs/nomenclature/catalog.md)
 - [ADRs](docs/adr/README.md)
 - [Modelo de ameaças](docs/security/threat-model.md)
-- [Contratos e estados](docs/architecture/contracts.md)
-- [Critérios de validação](docs/research/validation-protocol.md)
+- [Contrato Atlas/Genesis](docs/architecture/atlas-genesis.md)
+- [Protocolo de validação](docs/research/validation-protocol.md)
 
-## Desenvolvimento seguro
-
-Não comitar registros escolares reais, chaves, tokens, datasets sensíveis ou artefatos de modelos desconhecidos. A branch de implementação deve passar por revisão antes de integrar à principal.
+**Segurança:** não comitar registros reais, senhas, secrets ou artefatos não verificados. A verificação de hash isoladamente não comprova origem. Sem permissão de publicação no MVP.

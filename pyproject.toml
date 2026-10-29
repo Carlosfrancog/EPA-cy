@@ -4,13 +4,14 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "epa-research"
-version = "0.1.0"
-description = "EduPredict Research Platform: experimental integrity controls"
+version = "0.2.0"
+description = "EduPredict research platform: early scientific tooling"
 requires-python = ">=3.11"
 dependencies = []
 
 [project.optional-dependencies]
 dev = ["pytest>=8,<10"]
+research = ["duckdb>=1.2,<2"]
 
 [tool.setuptools.packages.find]
 include = ["epa*"]

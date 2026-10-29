@@ -1,0 +1,316 @@
+{
+  "schema_version": "epa.atlas.v1",
+  "catalog_id": "epa-demo-6ef-3em",
+  "curriculum_type": "SYNTHETIC_DEMO",
+  "source": {
+    "source_label": "BNCC official portal — contextual reference only; mappings unverified",
+    "reference_url": "https://basenacionalcomum.mec.gov.br/"
+  },
+  "grades": [
+    {
+      "grade_level": 6,
+      "subjects": [
+        {
+          "id": "MAT",
+          "area": "MATEMATICA",
+          "bncc_skill_codes": []
+        },
+        {
+          "id": "POR",
+          "area": "LINGUAGENS",
+          "bncc_skill_codes": []
+        },
+        {
+          "id": "CIE",
+          "area": "NATUREZA",
+          "bncc_skill_codes": []
+        },
+        {
+          "id": "HIS",
+          "area": "HUMANAS",
+          "bncc_skill_codes": []
+        },
+        {
+          "id": "GEO",
+          "area": "HUMANAS",
+          "bncc_skill_codes": []
+        },
+        {
+          "id": "ART",
+          "area": "LINGUAGENS",
+          "bncc_skill_codes": []
+        }
+      ]
+    },
+    {
+      "grade_level": 7,
+      "subjects": [
+        {
+          "id": "MAT",
+          "area": "MATEMATICA",
+          "bncc_skill_codes": []
+        },
+        {
+          "id": "POR",
+          "area": "LINGUAGENS",
+          "bncc_skill_codes": []
+        },
+        {
+          "id": "CIE",
+          "area": "NATUREZA",
+          "bncc_skill_codes": []
+        },
+        {
+          "id": "HIS",
+          "area": "HUMANAS",
+          "bncc_skill_codes": []
+        },
+        {
+          "id": "GEO",
+          "area": "HUMANAS",
+          "bncc_skill_codes": []
+        },
+        {
+          "id": "ART",
+          "area": "LINGUAGENS",
+          "bncc_skill_codes": []
+        }
+      ]
+    },
+    {
+      "grade_level": 8,
+      "subjects": [
+        {
+          "id": "MAT",
+          "area": "MATEMATICA",
+          "bncc_skill_codes": []
+        },
+        {
+          "id": "POR",
+          "area": "LINGUAGENS",
+          "bncc_skill_codes": []
+        },
+        {
+          "id": "CIE",
+          "area": "NATUREZA",
+          "bncc_skill_codes": []
+        },
+        {
+          "id": "HIS",
+          "area": "HUMANAS",
+          "bncc_skill_codes": []
+        },
+        {
+          "id": "GEO",
+          "area": "HUMANAS",
+          "bncc_skill_codes": []
+        },
+        {
+          "id": "ART",
+          "area": "LINGUAGENS",
+          "bncc_skill_codes": []
+        }
+      ]
+    },
+    {
+      "grade_level": 9,
+      "subjects": [
+        {
+          "id": "MAT",
+          "area": "MATEMATICA",
+          "bncc_skill_codes": []
+        },
+        {
+          "id": "POR",
+          "area": "LINGUAGENS",
+          "bncc_skill_codes": []
+        },
+        {
+          "id": "CIE",
+          "area": "NATUREZA",
+          "bncc_skill_codes": []
+        },
+        {
+          "id": "HIS",
+          "area": "HUMANAS",
+          "bncc_skill_codes": []
+        },
+        {
+          "id": "GEO",
+          "area": "HUMANAS",
+          "bncc_skill_codes": []
+        },
+        {
+          "id": "ART",
+          "area": "LINGUAGENS",
+          "bncc_skill_codes": []
+        }
+      ]
+    },
+    {
+      "grade_level": 10,
+      "subjects": [
+        {
+          "id": "MAT",
+          "area": "MATEMATICA",
+          "bncc_skill_codes": []
+        },
+        {
+          "id": "POR",
+          "area": "LINGUAGENS",
+          "bncc_skill_codes": []
+        },
+        {
+          "id": "FIS",
+          "area": "NATUREZA",
+          "bncc_skill_codes": []
+        },
+        {
+          "id": "QUI",
+          "area": "NATUREZA",
+          "bncc_skill_codes": []
+        },
+        {
+          "id": "BIO",
+          "area": "NATUREZA",
+          "bncc_skill_codes": []
+        },
+        {
+          "id": "HIS",
+          "area": "HUMANAS",
+          "bncc_skill_codes": []
+        },
+        {
+          "id": "GEO",
+          "area": "HUMANAS",
+          "bncc_skill_codes": []
+        },
+        {
+          "id": "FIL",
+          "area": "HUMANAS",
+          "bncc_skill_codes": []
+        },
+        {
+          "id": "SOC",
+          "area": "HUMANAS",
+          "bncc_skill_codes": []
+        },
+        {
+          "id": "ART",
+          "area": "LINGUAGENS",
+          "bncc_skill_codes": []
+        }
+      ]
+    },
+    {
+      "grade_level": 11,
+      "subjects": [
+        {
+          "id": "MAT",
+          "area": "MATEMATICA",
+          "bncc_skill_codes": []
+        },
+        {
+          "id": "POR",
+          "area": "LINGUAGENS",
+          "bncc_skill_codes": []
+        },
+        {
+          "id": "FIS",
+          "area": "NATUREZA",
+          "bncc_skill_codes": []
+        },
+        {
+          "id": "QUI",
+          "area": "NATUREZA",
+          "bncc_skill_codes": []
+        },
+        {
+          "id": "BIO",
+          "area": "NATUREZA",
+          "bncc_skill_codes": []
+        },
+        {
+          "id": "HIS",
+          "area": "HUMANAS",
+          "bncc_skill_codes": []
+        },
+        {
+          "id": "GEO",
+          "area": "HUMANAS",
+          "bncc_skill_codes": []
+        },
+        {
+          "id": "FIL",
+          "area": "HUMANAS",
+          "bncc_skill_codes": []
+        },
+        {
+          "id": "SOC",
+          "area": "HUMANAS",
+          "bncc_skill_codes": []
+        },
+        {
+          "id": "ART",
+          "area": "LINGUAGENS",
+          "bncc_skill_codes": []
+        }
+      ]
+    },
+    {
+      "grade_level": 12,
+      "subjects": [
+        {
+          "id": "MAT",
+          "area": "MATEMATICA",
+          "bncc_skill_codes": []
+        },
+        {
+          "id": "POR",
+          "area": "LINGUAGENS",
+          "bncc_skill_codes": []
+        },
+        {
+          "id": "FIS",
+          "area": "NATUREZA",
+          "bncc_skill_codes": []
+        },
+        {
+          "id": "QUI",
+          "area": "NATUREZA",
+          "bncc_skill_codes": []
+        },
+        {
+          "id": "BIO",
+          "area": "NATUREZA",
+          "bncc_skill_codes": []
+        },
+        {
+          "id": "HIS",
+          "area": "HUMANAS",
+          "bncc_skill_codes": []
+        },
+        {
+          "id": "GEO",
+          "area": "HUMANAS",
+          "bncc_skill_codes": []
+        },
+        {
+          "id": "FIL",
+          "area": "HUMANAS",
+          "bncc_skill_codes": []
+        },
+        {
+          "id": "SOC",
+          "area": "HUMANAS",
+          "bncc_skill_codes": []
+        },
+        {
+          "id": "ART",
+          "area": "LINGUAGENS",
+          "bncc_skill_codes": []
+        }
+      ]
+    }
+  ]
+}
