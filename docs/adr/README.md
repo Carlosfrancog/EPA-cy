@@ -9,5 +9,6 @@ Registros aceitos como diretrizes, não como alegações de implementação.
 - [ADR-005 — Imutabilidade](005-artifact-lifecycle.md)
 - [ADR-006 — Ledger](006-ledger-evidence.md)
 - [ADR-007 — Atlas e Genesis](007-atlas-genesis.md)
+- [ADR-008 — Core Engine longitudinal sintético](008-core-longitudinal.md)
 
-Pendências: banco operacional, chaves de assinatura, BNCC importada oficialmente, isolamento real de workers, publicação e retenção.
+Pendências: banco operacional, chaves de assinatura, BNCC oficial, isolamento real de workers, MLflow e publicação.
