@@ -10,5 +10,6 @@ Registros aceitos como diretrizes, não como alegações de implementação.
 - [ADR-006 — Ledger](006-ledger-evidence.md)
 - [ADR-007 — Atlas e Genesis](007-atlas-genesis.md)
 - [ADR-008 — Core Engine longitudinal sintético](008-core-longitudinal.md)
+- [ADR-009 — UI Rails navegável](009-rails-ui.md)
 
-Pendências: banco operacional, chaves de assinatura, BNCC oficial, isolamento real de workers, MLflow e publicação.
+Pendências: segurança de execução real, autenticação, chaves, BNCC oficial, assinatura, MLflow, workers e publicação.
