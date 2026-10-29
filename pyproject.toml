@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "epa-research"
+version = "0.1.0"
+description = "EduPredict Research Platform: experimental integrity controls"
+requires-python = ">=3.11"
+dependencies = []
+
+[project.optional-dependencies]
+dev = ["pytest>=8,<10"]
+
+[tool.setuptools.packages.find]
+include = ["epa*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

@@ -1,0 +1,11 @@
+{
+  "schema_version": "epa.manifest.v1",
+  "classification": "SYNTHETIC",
+  "artifact_path": "data/example.parquet",
+  "digest_algorithm": "sha256",
+  "digest": "replace-with-real-sha256",
+  "prediction_at": "2026-03-31T23:59:59Z",
+  "dependencies": [
+    {"feature": "n1", "available_at": "2026-03-20T09:00:00Z"}
+  ]
+}
