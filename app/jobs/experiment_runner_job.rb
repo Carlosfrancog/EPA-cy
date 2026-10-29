@@ -9,7 +9,7 @@ class ExperimentRunnerJob < ApplicationJob
 
     run = ExperimentRun.find(run_id)
     begin
-      evidence = EpaPythonRunner.new.call(run)
+      evidence = runner.call(run)
       run.update!(status: "completed", report_json: evidence.fetch(:json),
                   report_sha256: evidence.fetch(:sha256), input_sha256: evidence.fetch(:input_sha256),
                   finished_at: Time.current)
@@ -19,5 +19,11 @@ class ExperimentRunnerJob < ApplicationJob
       Rails.logger.error("EPA experiment run #{run_id} failed: #{e.class}")
       run.update!(status: "failed", failure_code: "internal_error", finished_at: Time.current)
     end
+  end
+
+  private
+
+  def runner
+    EpaPythonRunner.new
   end
 end
