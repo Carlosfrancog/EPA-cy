@@ -25,7 +25,7 @@ jobs:
       - name: Create real synthetic benchmark for screenshots
         run: |
           python -m epa.genesis.generate --output data/demo --students 150 --seed 20261029
-          bundle exec rails runner 'r = ExperimentRun.create!(model_key: "random_forest", seed: 17); ExperimentRunnerJob.perform_now(r.id); abort("benchmark failed: #{r.reload.failure_code}") unless r.completed?'
+          bundle exec rails runner 'r = ExperimentRun.create!(model_key: "random_forest", seed: 17); ExperimentRunnerJob.perform_now(r.id); r.reload; abort("benchmark failed: status=#{r.status} code=#{r.failure_code}") unless r.completed?'
       - name: Start application for actual browser screenshots
         run: |
           bundle exec rails server -b 127.0.0.1 -p 3000 > /tmp/epa-rails.log 2>&1 &
