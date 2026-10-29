@@ -11,5 +11,6 @@ Registros aceitos como diretrizes, não como alegações de implementação.
 - [ADR-007 — Atlas e Genesis](007-atlas-genesis.md)
 - [ADR-008 — Core Engine longitudinal sintético](008-core-longitudinal.md)
 - [ADR-009 — UI Rails navegável](009-rails-ui.md)
+- [ADR-010 — EPA Laboratory: execução web local](010-laboratory-orchestration.md)
 
-Pendências: segurança de execução real, autenticação, chaves, BNCC oficial, assinatura, MLflow, workers e publicação.
+Pendências: segurança de execução real, autenticação, chaves, BNCC oficial, assinaturas, MLflow, workers duráveis e publicação.

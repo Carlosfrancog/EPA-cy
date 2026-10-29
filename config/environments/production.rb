@@ -6,4 +6,6 @@ Rails.application.configure do
   config.force_ssl = ENV["EPA_FORCE_SSL"] == "1"
   config.assets.compile = false
   config.public_file_server.enabled = ENV["RAILS_SERVE_STATIC_FILES"].present?
+  # No background execution in production until authentication and a durable queue exist.
+  config.active_job.queue_adapter = :async
 end

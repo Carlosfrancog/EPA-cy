@@ -1,7 +1,7 @@
 Rails.application.routes.draw do
   root "dashboard#index"
   get "/datasets", to: "datasets#index", as: :datasets
-  get "/experiments", to: "experiments#index", as: :experiments
+  resources :experiments, only: [:index, :show, :create]
   post "/experiments/preview", to: "experiments#preview", as: :preview_experiment
   get "/models", to: "models#index", as: :models
   get "/integrity", to: "integrity#index", as: :integrity

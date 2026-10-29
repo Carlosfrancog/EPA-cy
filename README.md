@@ -1,43 +1,55 @@
 # EduPredict Analytics — EPA Research Platform
 
-Plataforma experimental de pesquisa educacional. **Não há modelos validados em dados reais nem controles completos para dados pessoais.**
+Laboratório experimental para análise longitudinal de educação. **Os dados e resultados atuais são sintéticos e não foram validados empiricamente.**
 
-## Componentes
+## Componentes EPA
 
 | Nome | Papel | Estado |
 | --- | --- | --- |
-| EPA ATLAS | Catálogo curricular | Demo sintética |
-| EPA GENESIS | Históricos longitudinais em Parquet | Protótipo |
-| EPA CORE ENGINE | Modelos e benchmarks | Baseline sintético |
-| EPA SENTINEL | Verificações e políticas | Protótipo |
-| EPA LEDGER | Auditoria e evidências | Protótipo |
+| EPA ATLAS | Catálogo curricular | Demonstração sintética |
+| EPA GENESIS | Geração longitudinal | Gerador DuckDB + Parquet |
+| EPA CORE ENGINE | Modelos | Baselines e relatório JSON |
+| EPA SENTINEL | Verificações e políticas | Protótipo não autenticado |
+| EPA LEDGER | Auditoria de hashes | Protótipo local |
 
-## Interface Rails navegável
+## Executar o laboratório local
 
-Stack: Rails 8, Hotwire (Turbo), importmap e CSS próprio. O Rails é apenas a UI por enquanto: **não executa modelos a partir da web**.
+Requisitos: Ruby 3.3, Rails (Bundler), Python 3.11+ e dependências instaladas.
 
 ```bash
 bundle install
-bundle exec rails s
+python3 -m pip install -e ".[dev,research]"
+bundle exec rails db:prepare
+bundle exec rails server -b 127.0.0.1
 ```
 
-Acesse `http://localhost:3000`. Navegação: Visão geral, Datasets, Experimentos, Modelos, Integridade, Arquitetura.
+Abra **http://127.0.0.1:3000/experiments**. Escolha modelo e seed e clique em **Executar experimento**.
 
-## Pipeline científico local
+A primeira execução gera automaticamente a demo com 500 alunos sintéticos, se ainda não houver dataset local. Cada run grava seu JSON e digests na tabela `experiment_runs`; resultados são apresentados após execução real do Python. A seleção de modelo é destaque na UI; os três baselines são treinados e comparados pelo CLI.
 
-Python 3.11+, DuckDB, Parquet, scikit-learn:
+Caso o executável Python tenha outro nome:
 
 ```bash
-python -m pip install -e ".[dev,research]"
-pytest -q
-python -m epa.genesis.generate --output data/demo --students 500 --seed 20261029
-python -m epa.core_engine.cli --dataset data/demo/academic_history.parquet --output data/demo/report.json
+EPA_PYTHON_EXECUTABLE=.venv/bin/python bundle exec rails server -b 127.0.0.1
 ```
 
-Após gerar o dataset, a tela **Datasets** mostra o manifesto demonstrativo. A tela **Experimentos** apenas prepara a configuração, sem iniciar execução real. O CLI compara os três modelos independentemente do modelo destacado na UI.
+O job runner é **local, não durável**; não é adequado para produção pública ou dados reais.
 
-As regras de geração e o catálogo são **sintéticos**, sem validação empírica. Nenhuma habilidade BNCC oficial foi importada ou verificada.
+## Testes e capturas da interface real
 
-Referências: [ADRs](docs/adr/README.md), [Atlas/Genesis](docs/architecture/atlas-genesis.md), [Core Engine](docs/research/core-engine-v0.md).
+```bash
+pytest -q
+bundle exec rails db:prepare
+bundle exec rails test
+```
 
-**Não exponha a aplicação publicamente com dados reais antes de implementar autenticação e limites de autorização.**
+O workflow Rails gera capturas do aplicativo iniciado no runner do GitHub Actions e as publica como artifact `epa-laboratory-screenshots` quando a etapa de screenshots é concluída.
+
+## Restrições
+
+- Sem acesso web público a jobs: ação de execução só aceita requisições locais em desenvolvimento/teste.
+- Sem autenticação/RBAC, MLS/MLflow, assinatura de proveniência ou isolamento em container.
+- Sem dados de alunos reais; a grade no Atlas é ilustrativa e não representa importação homologada da BNCC.
+- A predição experimental é `média anual do próximo ano >= 6`, diferente de M1/M2/M3 e evasão.
+
+[ADRs](docs/adr/README.md) · [Atlas/Genesis](docs/architecture/atlas-genesis.md) · [Core Engine](docs/research/core-engine-v0.md).
