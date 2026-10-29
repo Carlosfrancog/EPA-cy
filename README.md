@@ -1,37 +1,26 @@
 # EduPredict Analytics — EPA Research Platform
 
-Plataforma de experimentação científica educacional. O repositório está em desenvolvimento; **não possui resultados científicos validados nem proteção para dados pessoais reais**.
+Plataforma experimental de pesquisa educacional; **não há modelos validados em dados reais nem controles completos para dados pessoais**.
 
-## Componentes
-
-| Nome | Escopo | Implementação |
+| Nome | Papel | Estado |
 | --- | --- | --- |
-| EPA ATLAS | Referências e matrizes curriculares versionadas | Validação de catálogo demo |
-| EPA GENESIS | Históricos escolares sintéticos longitudinais | Gerador experimental Parquet |
-| EPA CORE ENGINE | Modelos e avaliação | Planejado |
-| EPA SENTINEL | Verificações temporais e integridade | Protótipo |
-| EPA LEDGER | Cadeia local de auditoria | Protótipo |
+| EPA ATLAS | Catálogo curricular | Demo sintética |
+| EPA GENESIS | Históricos longitudinais Parquet | Protótipo |
+| EPA CORE ENGINE | Modelos e benchmarks | Baseline sintético |
+| EPA SENTINEL | Políticas e verificação temporal | Protótipo |
+| EPA LEDGER | Auditoria e evidências hash-linked | Protótipo |
 
-**Stack:** Python + DuckDB + Parquet; Rails + Hotwire e MLflow planejados para integrações posteriores.
-
-## Execução rápida
+## Rodar o primeiro benchmark
 
 ```bash
 python -m pip install -e ".[dev,research]"
 pytest -q
-python -m epa.genesis.generate --output data/demo --students 100 --seed 20261029
+python -m epa.genesis.generate --output data/demo --students 500 --seed 20261029
+python -m epa.core_engine.cli --dataset data/demo/academic_history.parquet --output data/demo/report.json
 ```
 
-`data/demo` conterá Parquet e manifesto SHA-256; outputs nunca são sobrescritos.
+A execução compara majority, regressão logística e Random Forest prevendo **média anual >= 6 no ano seguinte**, com separação por estudante. Isso **não representa evasão** ou o antigo experimento M1/M2/M3.
 
-> A matriz em `examples/atlas.demo.json` é **inteiramente ilustrativa**. A BNCC orienta a estrutura, mas ainda não foi importada nem validada habilidade por habilidade. Não confundir esse exemplo com um currículo MEC verificado.
+As regras de geração e o catálogo curricular são sintéticos e **não foram calibrados contra dados escolares reais**. Nenhuma alegação de habilidade BNCC mapeada ou de proficiência real deve ser feita.
 
-## Referências internas
-
-- [Catálogo de componentes](docs/nomenclature/catalog.md)
-- [ADRs](docs/adr/README.md)
-- [Modelo de ameaças](docs/security/threat-model.md)
-- [Contrato Atlas/Genesis](docs/architecture/atlas-genesis.md)
-- [Protocolo de validação](docs/research/validation-protocol.md)
-
-**Segurança:** não comitar registros reais, senhas, secrets ou artefatos não verificados. A verificação de hash isoladamente não comprova origem. Sem permissão de publicação no MVP.
+Veja [ADRs](docs/adr/README.md), [Atlas/Genesis](docs/architecture/atlas-genesis.md) e [Core Engine](docs/research/core-engine-v0.md).
