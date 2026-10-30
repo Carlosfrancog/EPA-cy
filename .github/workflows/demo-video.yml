@@ -43,6 +43,10 @@ jobs:
         run: python -m playwright install --with-deps chromium
       - name: Record navigation, submit experiment and display real metrics
         run: python scripts/record_demo.py
+      - name: Install FFmpeg
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y ffmpeg
       - name: Encode video as MP4
         run: |
           ffmpeg -y -hide_banner -loglevel error -i tmp/demo/raw-navigation.webm \
@@ -55,6 +59,7 @@ jobs:
           name: epa-real-system-video
           path: |
             tmp/demo/EPA-Laboratory-Demo.mp4
+            tmp/demo/raw-navigation.webm
             tmp/demo/results-real.png
             tmp/demo/experiments-real.png
           if-no-files-found: warn
