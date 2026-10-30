@@ -1,0 +1,63 @@
+name: EPA Laboratory real UI demonstration video
+
+on:
+  push:
+    branches:
+      - feat/epa-demo-video
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  record:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.3'
+          bundler-cache: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install Ruby and Python dependencies
+        run: |
+          bundle install
+          python -m pip install -e ".[dev,research]" "playwright==1.56.0"
+      - name: Prepare Rails database and demonstration dataset
+        run: |
+          bundle exec rails db:prepare
+          python -m epa.genesis.generate --output data/demo --students 150 --seed 20261029
+      - name: Start real Rails application
+        run: |
+          bundle exec rails server -b 127.0.0.1 -p 3000 > /tmp/epa-demo-server.log 2>&1 &
+          for i in $(seq 1 60); do
+            if curl -fsS http://127.0.0.1:3000/up > /dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/epa-demo-server.log
+          exit 1
+      - name: Install Chromium
+        run: python -m playwright install --with-deps chromium
+      - name: Record navigation, submit experiment and display real metrics
+        run: python scripts/record_demo.py
+      - name: Encode video as MP4
+        run: |
+          ffmpeg -y -hide_banner -loglevel error -i tmp/demo/raw-navigation.webm \
+            -vf "fps=30,scale=1440:900" -c:v libx264 -preset veryfast -crf 24 \
+            -pix_fmt yuv420p -movflags +faststart tmp/demo/EPA-Laboratory-Demo.mp4
+          ffprobe -v error -show_entries format=duration,size -of default=nw=1 tmp/demo/EPA-Laboratory-Demo.mp4
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: epa-real-system-video
+          path: |
+            tmp/demo/EPA-Laboratory-Demo.mp4
+            tmp/demo/results-real.png
+            tmp/demo/experiments-real.png
+          if-no-files-found: warn
+      - name: Show Rails logs if workflow fails
+        if: failure()
+        run: tail -n 100 /tmp/epa-demo-server.log || true
