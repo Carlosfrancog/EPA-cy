@@ -14,6 +14,42 @@ jobs:
         with:
           ruby-version: '3.3'
           bundler-cache: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
       - run: bundle install
-      - run: bundle exec rails test test/controllers/navigation_test.rb
+      - run: python -m pip install -e ".[dev,research]"
+      - run: bundle exec rails db:prepare
+      - run: bundle exec rails test
       - run: bundle exec rails routes
+      - name: Create real synthetic benchmark for screenshots
+        run: |
+          python -m epa.genesis.generate --output data/demo --students 150 --seed 20261029
+          bundle exec rails runner 'r = ExperimentRun.create!(model_key: "random_forest", seed: 17); ExperimentRunnerJob.perform_now(r.id); r.reload; abort("benchmark failed: status=#{r.status} code=#{r.failure_code}") unless r.completed?'
+      - name: Start application for actual browser screenshots
+        run: |
+          bundle exec rails server -b 127.0.0.1 -p 3000 > /tmp/epa-rails.log 2>&1 &
+          for i in $(seq 1 40); do
+            if curl -fsS http://127.0.0.1:3000/up > /dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/epa-rails.log
+          exit 1
+      - name: Install headless browser
+        run: npx --yes playwright@1.56.1 install --with-deps chromium
+      - name: Capture actual running Rails application
+        run: |
+          mkdir -p tmp/screenshots
+          npx --yes playwright@1.56.1 screenshot --browser chromium --viewport-size "1440,960" --wait-for-timeout 1200 http://127.0.0.1:3000/ tmp/screenshots/01-dashboard.png
+          npx --yes playwright@1.56.1 screenshot --browser chromium --viewport-size "1440,960" --wait-for-timeout 1200 http://127.0.0.1:3000/experiments tmp/screenshots/02-experiments.png
+          npx --yes playwright@1.56.1 screenshot --browser chromium --viewport-size "1440,960" --wait-for-timeout 1200 http://127.0.0.1:3000/experiments/1 tmp/screenshots/03-results.png
+          npx --yes playwright@1.56.1 screenshot --browser chromium --viewport-size "390,844" --wait-for-timeout 1200 http://127.0.0.1:3000/experiments tmp/screenshots/04-mobile.png
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: epa-laboratory-screenshots
+          path: tmp/screenshots/*.png
+          if-no-files-found: ignore
+      - name: Server logs on failure
+        if: failure()
+        run: tail -n 120 /tmp/epa-rails.log || true

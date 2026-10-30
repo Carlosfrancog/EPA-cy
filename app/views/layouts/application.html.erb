@@ -7,8 +7,9 @@
     <meta name="description" content="EduPredict Analytics — plataforma experimental de validação de modelos educacionais">
     <%= csrf_meta_tags %>
     <%= csp_meta_tag %>
-    <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
+    <%= stylesheet_link_tag "application", "laboratory", "data-turbo-track": "reload" %>
     <%= javascript_importmap_tags %>
+    <%= yield :head %>
   </head>
   <body>
     <div class="shell">
@@ -27,7 +28,7 @@
         </nav>
         <div class="sidebar-bottom">
           <div class="workspace-status"><span class="status-dot"></span> Laboratório experimental</div>
-          <div class="sidebar-caption">EPA-cy · Versão alpha 0.1<br>Somente dados sintéticos</div>
+          <div class="sidebar-caption">EPA-cy · Laboratory alpha 0.2<br>Somente dados sintéticos</div>
         </div>
       </aside>
       <div class="main-column">
@@ -37,6 +38,7 @@
         </header>
         <main class="main-content">
           <% if flash[:alert] %><div role="alert" class="notice notice-error"><%= flash[:alert] %></div><% end %>
+          <% if flash[:notice] %><div role="status" class="notice notice-success"><%= flash[:notice] %></div><% end %>
           <%= yield %>
         </main>
         <footer class="footer">EduPredict Analytics · Protótipo de pesquisa · Dados e resultados não validados empiricamente</footer>

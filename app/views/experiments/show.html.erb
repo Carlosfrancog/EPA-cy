@@ -1,0 +1,36 @@
+<% content_for :title, "Experimento ##{@run.id}" %><% content_for :section, "Experimentos / ##{@run.id}" %>
+<% if @run.waiting? %><% content_for :head do %><meta http-equiv="refresh" content="4"><% end %><% end %>
+<div class="page-heading"><div><div class="eyebrow">EPA CORE ENGINE · EXECUÇÃO #<%= @run.id %></div><h1>Relatório experimental</h1><p>Resultados calculados pelo motor Python e armazenados como evidência local.</p></div><%= link_to "← Histórico", experiments_path, class: "button button-outline" %></div>
+<div class="stats-grid">
+  <div class="stat-card"><div class="stat-label">Estado atual</div><div class="stat-value stat-value-text"><span class="run-status status-<%= @run.status %>"><%= @run.status.upcase %></span></div><div class="stat-foot">Atualização de 4 em 4 segundos enquanto executa</div></div>
+  <div class="stat-card"><div class="stat-label">Modelo em destaque</div><div class="stat-value stat-value-text"><%= @run.model_label %></div><div class="stat-foot">O benchmark executa os três modelos</div></div>
+  <div class="stat-card"><div class="stat-label">Seed</div><div class="stat-value"><%= @run.seed %></div><div class="stat-foot">Separação por estudante</div></div>
+  <div class="stat-card"><div class="stat-label">Tipo de evidência</div><div class="stat-value stat-value-text">Sintética</div><div class="stat-foot">Não validada em dados reais</div></div>
+</div>
+
+<% if @run.waiting? %>
+  <div class="panel"><div class="empty-state"><div class="empty-icon">◌</div><h3>Execução <%= @run.status == "queued" ? "na fila" : "em andamento" %></h3><p>O relatório será atualizado automaticamente. A página pode ser aberta novamente pelo histórico.</p></div></div>
+<% elsif @run.status == "failed" %>
+  <div class="panel"><div class="eyebrow">EXECUÇÃO NÃO CONCLUÍDA</div><h3>Erro controlado</h3><p class="muted">Código: <code><%= @run.failure_code %></code></p><p>Confira a instalação de Python, as dependências de pesquisa e a integridade do dataset. Não foi produzido um resultado científico.</p></div>
+<% elsif @run.completed? && @report %>
+  <div class="panel"><div class="panel-heading"><div><div class="eyebrow">RESULTADOS MEDIDOS</div><h3>Desempenho dos modelos</h3></div><span class="subtle-pill">EXPERIMENTAL · NÃO VALIDADO</span></div>
+    <div class="table-wrap"><table class="runs-table"><thead><tr><th>Modelo</th><th>Acurácia</th><th>Acurácia balanceada</th><th>F1 macro</th></tr></thead><tbody>
+    <% @report.fetch("results", []).each do |result| %>
+      <tr class="<%= result["model"] == @run.model_key ? "highlight-row" : "" %>"><td><strong><%= ExperimentRun::MODELS.fetch(result["model"], result["model"]) %></strong></td><td><%= number_to_percentage(result["accuracy"] * 100, precision: 1) %></td><td><%= number_to_percentage(result["balanced_accuracy"] * 100, precision: 1) %></td><td><%= number_with_precision(result["f1_macro"], precision: 3) %></td></tr>
+    <% end %>
+    </tbody></table></div>
+  </div>
+  <div class="two-columns">
+    <section class="panel"><div class="eyebrow">MATRIZ DE CONFUSÃO · MODELO EM DESTAQUE</div><h3><%= @run.model_label %></h3>
+      <% matrix = @selected_result && @selected_result["confusion_matrix"] %>
+      <% if matrix.is_a?(Array) && matrix.size == 2 %>
+        <div class="confusion-grid"><div class="confusion-label">Real \ Predito</div><div class="confusion-label">Classe 0</div><div class="confusion-label">Classe 1</div>
+        <% matrix.each_with_index do |row, i| %><div class="confusion-label">Classe <%= i %></div><% row.each do |count| %><div class="confusion-value"><%= count %></div><% end %><% end %></div>
+      <% end %>
+    </section>
+    <section class="panel"><div class="eyebrow">RASTREABILIDADE LOCAL</div><h3>Dados e evidências</h3><div class="detail-list"><div><span>Treino (observações)</span><strong><%= @report["train_observations"] %></strong></div><div><span>Teste (observações)</span><strong><%= @report["test_observations"] %></strong></div><div><span>Dataset SHA-256</span><code title="<%= @run.input_sha256 %>"><%= @run.input_sha256.to_s.first(14) %>…</code></div><div><span>Relatório SHA-256</span><code title="<%= @run.report_sha256 %>"><%= @run.report_sha256.to_s.first(14) %>…</code></div></div><p class="muted">Este armazenamento é operacional. Assinaturas e certificação de proveniência pelo EPA LEDGER permanecem pendentes.</p></section>
+  </div>
+<% else %>
+  <div class="panel"><h3>Relatório não disponível</h3><p>A execução foi bloqueada ou suas evidências estão incompletas.</p></div>
+<% end %>
+<div class="panel slim-panel"><strong>Limitação científica:</strong> este benchmark compara modelos na mesma população sintética. Não representa desempenho pedagógico real, evasão escolar ou generalização temporal independente.</div>

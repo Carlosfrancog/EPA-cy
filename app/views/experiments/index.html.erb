@@ -1,21 +1,48 @@
 <% content_for :title, "Experimentos" %><% content_for :section, "Experimentos" %>
-<div class="page-heading"><div><div class="eyebrow">EPA CORE ENGINE</div><h1>Experimentos</h1><p>Configure um benchmark de classificação longitudinal com dados sintéticos.</p></div><span class="tag">PROTOCOLO EXPERIMENTAL</span></div>
-<div class="two-columns experiment-layout"><section class="panel"><div class="panel-heading"><div><div class="eyebrow">NOVA CONFIGURAÇÃO</div><h3>Preparar experimento</h3></div></div>
-<%= form_with url: preview_experiment_path, method: :post, class: "experiment-form" do |f| %>
-<label for="model">Algoritmo</label><%= select_tag :model, options_for_select(@options.map { |key, value| [value, key] }, params[:model] || "random_forest"), id: "model", class: "input" %>
-<label for="seed">Seed de reprodução</label><%= number_field_tag :seed, params[:seed] || "20261029", min: 0, max: 999999999, id: "seed", class: "input", required: true %>
-<label>Dataset de entrada</label><div class="readonly-field">data/demo/academic_history.parquet <span>SYNTHETIC</span></div>
-<div class="info-inline">A configuração abaixo <strong>não inicia treinamento</strong>. Ela prepara um roteiro reproduzível para execução local do benchmark.</div>
-<%= f.submit "Preparar configuração →", class: "button button-primary button-wide" %>
-<% end %></section>
-<section class="panel"><div class="panel-heading"><div><div class="eyebrow">RESULTADO DA CONFIGURAÇÃO</div><h3>Plano de execução</h3></div></div>
-<% if @experiment %>
-<div class="success-note">✓ Configuração validada — nenhuma execução iniciada</div>
-<div class="detail-list"><div><span>Algoritmo selecionado</span><strong><%= @experiment[:model_label] %></strong></div><div><span>Seed</span><strong><%= @experiment[:seed] %></strong></div><div><span>Status</span><strong>Não executado</strong></div></div>
-<p class="muted">O CLI atual compara os três modelos no mesmo protocolo, independentemente do modelo destacado nesta tela.</p>
-<pre><code>python -m epa.core_engine.cli --dataset data/demo/academic_history.parquet --seed <%= @experiment[:seed] %> --output data/demo/report.json</code></pre>
-<% else %>
-<div class="empty-state"><div class="empty-icon">◇</div><h3>Pronto para configurar</h3><p>Selecione o algoritmo e a seed. Nenhum resultado será inventado ou exibido sem execução real.</p></div>
-<% end %>
-</section></div>
-<div class="panel slim-panel"><div class="eyebrow">SOBRE O PROTOCOLO</div><p>Predição experimental: média do ano seguinte ≥ 6. Separação por aluno, com pré-processamento ajustado somente no treino. <strong>Não é predição de evasão nem reprodução de M1/M2/M3.</strong></p></div>
+<div class="page-heading"><div><div class="eyebrow">EPA LABORATORY · CORE ENGINE</div><h1>Experimentos</h1><p>Configure, execute e acompanhe benchmarks longitudinais sintéticos.</p></div><span class="tag">LABORATÓRIO LOCAL</span></div>
+
+<div class="two-columns experiment-layout">
+<section class="panel">
+  <div class="panel-heading"><div><div class="eyebrow">EXECUÇÃO CONTROLADA</div><h3>Novo experimento</h3></div><span class="subtle-pill">PYTHON ENGINE</span></div>
+  <%= form_with url: experiments_path, method: :post, class: "experiment-form" do |f| %>
+    <label for="model">Modelo em destaque</label>
+    <%= select_tag :model, options_for_select(@options.map { |key, value| [value, key] }, params[:model] || "random_forest"), id: "model", class: "input" %>
+    <label for="seed">Seed reprodutível</label>
+    <%= number_field_tag :seed, params[:seed] || "20261029", min: 0, max: 999999999, id: "seed", class: "input", required: true %>
+    <label>Dataset permitido</label>
+    <div class="readonly-field">data/demo/academic_history.parquet <span>SYNTHETIC</span></div>
+    <div class="info-inline">Ao executar localmente, o Genesis cria automaticamente a amostra sintética caso ainda não exista. Os três modelos são avaliados; a seleção determina o destaque no relatório.</div>
+    <%= f.submit "Executar experimento →", class: "button button-primary button-wide" %>
+  <% end %>
+  <%= form_with url: preview_experiment_path, method: :post, class: "preview-form" do |f| %>
+    <%= hidden_field_tag :model, params[:model] || "random_forest" %>
+    <%= hidden_field_tag :seed, params[:seed] || "20261029" %>
+    <%= f.submit "Ver prévia sem executar", class: "button button-outline button-wide" %>
+  <% end %>
+</section>
+
+<section class="panel">
+  <div class="panel-heading"><div><div class="eyebrow">STATUS EXPERIMENTAL</div><h3>Plano de execução</h3></div></div>
+  <% if @experiment %>
+    <div class="success-note">✓ CONFIGURAÇÃO VÁLIDA — NENHUMA EXECUÇÃO INICIADA</div>
+    <div class="detail-list"><div><span>Algoritmo destacado</span><strong><%= @experiment[:model_label] %></strong></div><div><span>Seed</span><strong><%= @experiment[:seed] %></strong></div><div><span>Status</span><strong>Não executado</strong></div></div>
+    <pre><code>python -m epa.core_engine.cli --dataset data/demo/academic_history.parquet --seed <%= @experiment[:seed] %> --output data/demo/report.json</code></pre>
+  <% else %>
+    <div class="empty-state"><div class="empty-icon">◇</div><h3>Pronto para experimentar</h3><p>Um job é registrado no SQLite e executado pelo worker local. Você pode abrir o histórico abaixo para acompanhar o resultado.</p></div>
+  <% end %>
+  <div class="callout">Tarefa: prever média anual ≥ 6 no ano seguinte. Dados sintéticos, sem validade empírica comprovada. A execução web é restrita ao ambiente local de desenvolvimento.</div>
+</section>
+</div>
+
+<section class="panel">
+  <div class="panel-heading"><div><div class="eyebrow">HISTÓRICO</div><h3>Execuções registradas</h3></div><span class="subtle-pill"><%= @runs.size %> RECENTES</span></div>
+  <% if @runs.any? %>
+    <div class="table-wrap"><table class="runs-table"><thead><tr><th>ID</th><th>Modelo destacado</th><th>Seed</th><th>Status</th><th>Criado em</th><th></th></tr></thead><tbody>
+      <% @runs.each do |run| %>
+        <tr><td><strong>#<%= run.id %></strong></td><td><%= run.model_label %></td><td><%= run.seed %></td><td><span class="run-status status-<%= run.status %>"><%= run.status.upcase %></span></td><td><%= l(run.created_at, format: :short) %></td><td><%= link_to "Ver relatório →", experiment_path(run), class: "text-link" %></td></tr>
+      <% end %>
+    </tbody></table></div>
+  <% else %>
+    <div class="empty-state"><p>Nenhum experimento registrado. A primeira execução aparecerá aqui.</p></div>
+  <% end %>
+</section>
