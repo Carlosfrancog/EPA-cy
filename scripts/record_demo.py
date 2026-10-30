@@ -46,8 +46,8 @@ with sync_playwright() as p:
         navigate("/models", 3000)
         navigate("/experiments", 3500)
 
-        page.locator("#model").select_option("random_forest")
-        page.locator("#seed").fill("20261029")
+        page.locator("select[name=model]").select_option("random_forest")
+        page.locator("input[type=number][name=seed]").fill("20261029")
         page.wait_for_timeout(1300)
         page.get_by_role("button", name=re.compile("Executar experimento")).click()
         page.wait_for_url(re.compile(r"/experiments/\d+"), timeout=15000)
