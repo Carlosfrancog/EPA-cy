@@ -1,0 +1,41 @@
+<% content_for :title, "MAPA Evaluation" %>
+<% content_for :section, "MAPA / Avaliação" %>
+<div class="page-heading"><div><div class="eyebrow">EPA · MAPA EVALUATION</div>
+<h1>Comparação científica de experimentos</h1>
+<p>Explore resultados históricos sintéticos por protocolo, algoritmo e métrica. Nenhum modelo é promovido automaticamente.</p></div><span class="tag">ANÁLISE EXPLORATÓRIA</span></div>
+<section class="panel">
+  <%= form_with url: mapa_evaluation_path, method: :get, class: "experiment-form" do |f| %>
+    <label for="protocol">Momento da avaliação</label>
+    <%= select_tag :protocol, options_for_select([["Early · N1", "early"], ["Trajectory · N2", "trajectory"], ["Consolidated · N3", "consolidated"]], @protocol), class: "input" %>
+    <label for="model">Algoritmo</label>
+    <%= select_tag :model, options_for_select([["Todos", "all"], ["Majority", "majority"], ["Regressão logística", "logistic_regression"], ["Random Forest", "random_forest"]], @model), class: "input" %>
+    <label for="metric">Ordenar por</label>
+    <%= select_tag :metric, options_for_select([["F1 macro", "f1_macro"], ["Acurácia balanceada", "balanced_accuracy"], ["Acurácia", "accuracy"]], @metric), class: "input" %>
+    <%= f.submit "Atualizar comparação", class: "button button-primary" %>
+  <% end %>
+</section>
+<section class="panel"><div class="panel-heading"><div><h3>Candidatos observados</h3><p class="muted">Melhor resultado por algoritmo neste filtro — não equivale a modelo campeão.</p></div></div>
+<% if @evaluation[:best_per_model].any? %>
+  <div class="table-wrap"><table class="runs-table"><thead><tr><th>Modelo</th><th>Experimento</th><th>Métrica selecionada</th><th>Suporte no teste</th></tr></thead><tbody>
+    <% @evaluation[:best_per_model].each do |row| %>
+      <tr><td><strong><%= row[:model].humanize %></strong></td><td><%= link_to "##{row[:run_id]}", mapa_run_path(row[:run_id]), class: "text-link" %></td>
+      <td><%= number_with_precision(row[:score], precision: 3) %></td><td><%= row[:test_observations] %></td></tr>
+    <% end %>
+  </tbody></table></div>
+<% else %><p class="muted">Nenhum experimento concluído compatível com este filtro.</p><% end %>
+</section>
+<section class="panel"><div class="panel-heading"><div><h3>Ranking de execuções</h3></div><span class="subtle-pill"><%= @evaluation[:rows].size %> RESULTADOS</span></div>
+<% if @evaluation[:rows].any? %>
+  <div class="table-wrap"><table class="runs-table"><thead><tr><th>Experimento</th><th>Modelo</th><th>Seed</th><th>F1 macro</th><th>Acurácia bal.</th><th>Acurácia</th><th>Recall aprovado</th><th>Recall recuperação</th><th>Recall reprovado</th><th>Suporte A/R/F</th></tr></thead><tbody>
+    <% @evaluation[:rows].each do |row| %>
+      <tr><td><%= link_to "##{row[:run_id]}", mapa_run_path(row[:run_id]), class: "text-link" %></td><td><%= row[:model].humanize %></td>
+      <td><%= row[:seed] %></td><td><%= number_with_precision(row[:f1_macro], precision: 3) %></td>
+      <td><%= number_with_precision(row[:balanced_accuracy], precision: 3) %></td>
+      <td><%= number_with_precision(row[:accuracy], precision: 3) %></td>
+      <% %w[approved recovery failed].each do |key| %><td><%= number_to_percentage(row[:recalls][key] * 100, precision: 1) %></td><% end %>
+      <td><%= row[:support].values_at("approved", "recovery", "failed").join("/") %></td></tr>
+    <% end %>
+  </tbody></table></div>
+<% else %><p class="muted">Execute treinamentos MAPA no laboratório para preencher a comparação.</p><% end %>
+</section>
+<div class="panel slim-panel"><strong>Limitações:</strong> <%= @evaluation[:warnings].join(" ") %></div>

@@ -4,6 +4,7 @@ Rails.application.routes.draw do
   resources :experiments, only: [:index, :show, :create]
   post "/experiments/preview", to: "experiments#preview", as: :preview_experiment
   resources :mapa_runs, only: [:index, :show, :create], path: "mapa"
+  get "/mapa/evaluation", to: "mapa_evaluations#index", as: :mapa_evaluation
   get "/models", to: "models#index", as: :models
   get "/integrity", to: "integrity#index", as: :integrity
   get "/architecture", to: "architecture#index", as: :architecture
