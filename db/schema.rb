@@ -1,4 +1,4 @@
-ActiveRecord::Schema[8.0].define(version: 2026_11_01_180000) do
+ActiveRecord::Schema[8.0].define(version: 2026_11_01_190000) do
   create_table "experiment_runs", force: :cascade do |t|
     t.string "model_key", null: false
     t.integer "seed", null: false
@@ -21,6 +21,8 @@ ActiveRecord::Schema[8.0].define(version: 2026_11_01_180000) do
     t.string "report_sha256"
     t.string "dataset_manifest_sha256"
     t.text "mlflow_links_json"
+    t.text "research_json"
+    t.string "research_sha256"
     t.string "failure_code"
     t.datetime "started_at"
     t.datetime "finished_at"
