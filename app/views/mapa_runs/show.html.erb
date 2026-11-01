@@ -38,6 +38,27 @@
       <% end %>
     </section>
   <% end %>
+  <% if (research = @run.research_report) %>
+    <section class="panel"><div class="eyebrow">MAPA RESEARCH PROTOCOL v0.2</div><h3>Validação cruzada agrupada</h3>
+      <p class="muted">Distribuição de folds, não intervalo de confiança populacional.</p>
+      <% research.fetch("protocols", []).each do |protocol| %>
+        <h4>Protocolo N<%= protocol["cutoff_term"] %></h4>
+        <p class="muted">Validação temporal: <strong><%= protocol.dig("temporal_holdout", "status") %></strong>
+        <% if protocol.dig("temporal_holdout", "reason") %> · <%= protocol.dig("temporal_holdout", "reason") %><% end %></p>
+        <div class="table-wrap"><table class="runs-table"><thead><tr><th>Modelo</th><th>F1 médio</th><th>Desvio</th><th>Faixa de F1</th><th>Folds sem classe</th></tr></thead><tbody>
+        <% protocol.fetch("summaries", []).each do |summary| %>
+          <% stats = summary["f1_macro_fold_distribution"] %>
+          <tr><td><%= summary["model"].humanize %></td><td><%= number_with_precision(stats["mean"], precision: 3) %></td>
+            <td><%= number_with_precision(stats["std"], precision: 3) %></td>
+            <td><%= number_with_precision(stats["min"], precision: 3) %>–<%= number_with_precision(stats["max"], precision: 3) %></td>
+            <td><%= summary["missing_class_folds"] %></td></tr>
+        <% end %></tbody></table></div>
+      <% end %>
+      <p class="muted">SHA-256 do relatório de pesquisa: <code><%= @run.research_sha256 %></code></p>
+    </section>
+  <% else %>
+    <section class="panel"><h3>Validação científica adicional</h3><p class="muted">Não disponível nesta execução histórica.</p></section>
+  <% end %>
   <section class="panel"><div class="eyebrow">MLFLOW · RASTREAMENTO OPCIONAL</div><h3>Identificadores dos modelos</h3>
     <% if @run.mlflow_links.any? %>
       <div class="table-wrap"><table class="runs-table"><thead><tr><th>Protocolo</th><th>Algoritmo</th><th>MLflow Run ID</th></tr></thead><tbody>

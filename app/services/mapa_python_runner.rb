@@ -48,8 +48,22 @@ class MapaPythonRunner
 
     report_sha = Digest::SHA256.hexdigest(raw)
     links_json = tracking_enabled ? verified_links!(links_path, report, report_sha) : nil
+    research_output = output_dir.join("research.json")
+    invoke("epa.core_engine.mapa_research", "--dataset", dataset.to_s,
+           "--seed", run.seed.to_s, "--folds", "3", "--output", research_output.to_s)
+    raise Failure.new("research_report_missing") unless research_output.file?
+    raise Failure.new("research_report_too_large") if research_output.size > 900_000
+    research_raw = research_output.binread
+    research = JSON.parse(research_raw)
+    valid_research = research["schema_version"] == "epa.mapa.research_protocol.v2" &&
+                     research["dataset_classification"] == "SYNTHETIC" &&
+                     research["source_manifest_sha256"] == manifest_sha &&
+                     research["protocols"].is_a?(Array) &&
+                     research["protocols"].map { |p| p["cutoff_term"] } == [1, 2, 3]
+    raise Failure.new("research_report_invalid") unless valid_research
     { json: raw, sha256: report_sha, dataset_sha256: manifest_sha,
-      mlflow_links_json: links_json }
+      mlflow_links_json: links_json, research_json: research_raw,
+      research_sha256: Digest::SHA256.hexdigest(research_raw) }
   rescue JSON::ParserError
     raise Failure.new("report_invalid")
   end

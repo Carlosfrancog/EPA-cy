@@ -9,6 +9,13 @@ class MapaRun < ApplicationRecord
     nil
   end
 
+  def research_report
+    return nil if research_json.blank?
+    JSON.parse(research_json)
+  rescue JSON::ParserError
+    nil
+  end
+
   def mlflow_links
     return [] if mlflow_links_json.blank?
     JSON.parse(mlflow_links_json).fetch("runs", [])
