@@ -80,7 +80,22 @@ class MapaPythonRunner
                      e["features"].all? { |f| f["mean_f1_drop"].is_a?(Numeric) && f["mean_f1_drop"].finite? }
                  end
     raise Failure.new("lupa_report_invalid") unless valid_lupa
+    local_path = output_dir.join("lupa-local.json")
+    invoke("epa.core_engine.lupa_local", "--dataset", dataset.to_s,
+           "--seed", run.seed.to_s, "--output", local_path.to_s)
+    raise Failure.new("lupa_local_missing") unless local_path.file?
+    raise Failure.new("lupa_local_too_large") if local_path.size > 150_000
+    local_raw = local_path.binread
+    local = JSON.parse(local_raw)
+    valid_local = local["schema_version"] == "epa.lupa.local_diagnostics.v1" &&
+                  local["dataset_classification"] == "SYNTHETIC" &&
+                  local["source_manifest_sha256"] == manifest_sha &&
+                  local["seed"] == run.seed && local["protocols"].is_a?(Array) &&
+                  local["protocols"].map { |p| p["cutoff_term"] } == [1, 2, 3] &&
+                  local["protocols"].all? { |p| p["cases"].is_a?(Array) && p["cases"].size <= 12 }
+    raise Failure.new("lupa_local_invalid") unless valid_local
     { json: raw, sha256: report_sha, dataset_sha256: manifest_sha,
+      lupa_local_json: local_raw, lupa_local_sha256: Digest::SHA256.hexdigest(local_raw),
       lupa_json: lupa_raw, lupa_sha256: Digest::SHA256.hexdigest(lupa_raw),
       mlflow_links_json: links_json, research_json: research_raw,
       research_sha256: Digest::SHA256.hexdigest(research_raw) }

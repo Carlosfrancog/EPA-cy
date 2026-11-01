@@ -38,6 +38,21 @@
       <% end %>
     </section>
   <% end %>
+  <% if (local = @run.lupa_local_report) %>
+    <section class="panel"><div class="eyebrow">LUPA · DIAGNÓSTICO DE ERROS</div><h3>Casos sintéticos classificados incorretamente</h3>
+      <p class="muted">Amostra de até 12 erros por protocolo, sem IDs de estudantes e sem registros individuais de notas. Substituição pela mediana é teste de sensibilidade, não intervenção.</p>
+      <% local.fetch("protocols", []).each do |block| %>
+        <h4>N<%= block["cutoff_term"] %> · <%= block["error_observations"] %> erros em <%= block["test_observations"] %> observações</h4>
+        <div class="table-wrap"><table class="runs-table"><thead><tr><th>Caso</th><th>Real</th><th>Previsto</th><th>Confiança</th><th>Variável de maior sensibilidade local</th></tr></thead><tbody>
+        <% block.fetch("cases", []).each do |item| %>
+          <tr><td>#<%= item["case_number"] %></td><td><%= item["actual"] %></td><td><%= item["predicted"] %></td>
+          <td><%= number_to_percentage(item["predicted_probability"] * 100, precision: 1) %></td>
+          <td><%= item.fetch("top_sensitivities", []).first&.fetch("feature", "—") %></td></tr>
+        <% end %></tbody></table></div>
+      <% end %>
+      <p class="muted">SHA-256 do diagnóstico: <code><%= @run.lupa_local_sha256 %></code></p>
+    </section>
+  <% end %>
   <% if (lupa = @run.lupa_report) %>
     <section class="panel"><div class="eyebrow">LUPA · EXPLICABILIDADE</div><h3>Sensibilidade preditiva por variável</h3>
       <p class="muted">Importância por permutação no conjunto de teste do Random Forest. Queda do F1 macro ao embaralhar cada variável; não demonstra causalidade.</p>

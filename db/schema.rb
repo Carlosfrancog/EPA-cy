@@ -1,4 +1,4 @@
-ActiveRecord::Schema[8.0].define(version: 2026_11_01_200000) do
+ActiveRecord::Schema[8.0].define(version: 2026_11_01_210000) do
   create_table "experiment_runs", force: :cascade do |t|
     t.string "model_key", null: false
     t.integer "seed", null: false
@@ -25,6 +25,8 @@ ActiveRecord::Schema[8.0].define(version: 2026_11_01_200000) do
     t.string "research_sha256"
     t.text "lupa_json"
     t.string "lupa_sha256"
+    t.text "lupa_local_json"
+    t.string "lupa_local_sha256"
     t.string "failure_code"
     t.datetime "started_at"
     t.datetime "finished_at"
