@@ -1,0 +1,53 @@
+<% content_for :title, "LUPA Observatory" %>
+<% content_for :section, "LUPA / Observatório" %>
+<div class="page-heading">
+  <div><div class="eyebrow">EPA · LUPA OBSERVATORY</div>
+    <h1>Explicabilidade dos modelos</h1>
+    <p>Investigue a sensibilidade do Random Forest por variável e compare os protocolos N1, N2 e N3 em experimentos sintéticos.</p>
+  </div><span class="tag">INTERPRETAÇÃO NÃO CAUSAL</span>
+</div>
+<section class="panel">
+  <div class="panel-heading"><div><div class="eyebrow">SELEÇÃO DO EXPERIMENTO</div><h3>Protocolo e execução</h3></div></div>
+  <%= form_with url: lupa_observatory_path, method: :get, class: "experiment-form" do |f| %>
+    <label for="protocol">Momento da previsão</label>
+    <%= select_tag :protocol, options_for_select([["Early · N1", "early"], ["Trajectory · N2", "trajectory"], ["Consolidated · N3", "consolidated"]], @protocol), class: "input" %>
+    <label for="run_id">Execução MAPA</label>
+    <%= select_tag :run_id, options_for_select(@observatory[:rows].map { |r| ["##{r[:run_id]} · seed #{r[:seed]}", r[:run_id]] }, @row&.dig(:run_id)), class: "input" %>
+    <%= f.submit "Analisar variáveis", class: "button button-primary" %>
+  <% end %>
+</section>
+<% if @row %>
+  <section class="panel">
+    <div class="panel-heading"><div><div class="eyebrow">PERMUTATION IMPORTANCE · HOLDOUT POR ALUNO</div><h3>Queda do F1 macro por variável</h3></div><span class="subtle-pill">RANDOM FOREST</span></div>
+    <div class="stats-grid">
+      <div class="stat-card"><div class="stat-label">F1 macro referência</div><div class="stat-value"><%= number_with_precision(@row[:score], precision: 3) %></div></div>
+      <div class="stat-card"><div class="stat-label">Observações no teste</div><div class="stat-value"><%= @row[:test_observations] %></div></div>
+      <div class="stat-card"><div class="stat-label">Experimento</div><div class="stat-value">#<%= @row[:run_id] %></div></div>
+    </div>
+    <% scale = [@row[:features].map { |f| f["mean_f1_drop"].abs }.max || 0.0, 0.000001].max %>
+    <div class="lupa-bars" role="img" aria-label="Gráfico de importância das variáveis do modelo">
+    <% @row[:features].each do |feature| %>
+      <div class="lupa-bar-row">
+        <span class="lupa-feature"><%= feature["name"] %></span>
+        <div class="lupa-track"><div class="lupa-fill <%= feature["mean_f1_drop"] < 0 ? "lupa-negative" : "" %>" style="width:<%= number_with_precision(feature["mean_f1_drop"].abs / scale * 100, precision: 1) %>%"></div></div>
+        <strong class="lupa-value"><%= number_with_precision(feature["mean_f1_drop"], precision: 4) %></strong>
+      </div>
+    <% end %>
+    </div>
+    <p class="muted">Magnitude absoluta da variação apresentada nas barras; o valor numérico preserva o sinal. Importâncias negativas não são convertidas em zero.</p>
+    <p><%= link_to "Abrir relatório científico da execução →", mapa_run_path(@row[:run_id]), class: "text-link" %></p>
+  </section>
+  <section class="panel">
+    <div class="panel-heading"><div><h3>Outras execuções no mesmo protocolo</h3></div><span class="subtle-pill"><%= @observatory[:total] %> DISPONÍVEIS</span></div>
+    <div class="table-wrap"><table class="runs-table"><thead><tr><th>Execução</th><th>Seed</th><th>F1 referência</th><th>Variável mais sensível</th></tr></thead><tbody>
+    <% @observatory[:rows].each do |entry| %>
+      <tr class="<%= entry[:run_id] == @row[:run_id] ? "highlight-row" : "" %>"><td><%= link_to "##{entry[:run_id]}", lupa_observatory_path(protocol: @protocol, run_id: entry[:run_id]), class: "text-link" %></td>
+      <td><%= entry[:seed] %></td><td><%= number_with_precision(entry[:score], precision: 3) %></td><td><%= entry[:features].first["name"] %></td></tr>
+    <% end %></tbody></table></div>
+  </section>
+<% else %>
+  <section class="panel"><div class="empty-state"><h3>Nenhum relatório LUPA disponível</h3>
+  <p>Execute um novo treinamento MAPA com o LUPA habilitado para gerar evidência real de importância por permutação.</p>
+  <%= link_to "Abrir MAPA Laboratory →", mapa_runs_path, class: "text-link" %></div></section>
+<% end %>
+<div class="panel slim-panel"><strong>Limitação científica:</strong> <%= @observatory[:warning] %></div>
