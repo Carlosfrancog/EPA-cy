@@ -94,7 +94,7 @@ class MapaPythonRunner
               entry.is_a?(Hash) &&
                 [entry["protocol"], entry["model"]] == expected[index] &&
                 entry["run_id"].is_a?(String) &&
-                entry["run_id"].match?(/\\A[0-9a-f]{32,64}\\z/i)
+                entry["run_id"].match?(/\A[0-9a-f]{32,64}\z/i)
             end && runs.map { |entry| entry["run_id"] }.uniq.length == 9
     raise Failure.new("mlflow_links_invalid") unless valid
     JSON.generate(links)
