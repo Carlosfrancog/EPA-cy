@@ -5,5 +5,9 @@ class MapaEvaluationsController < ApplicationController
     @model = (["all"] + MapaEvaluation::MODELS).include?(params[:model]) ? params[:model] : "all"
     @evaluation = MapaEvaluation.build(MapaRun.where(status: "completed").order(created_at: :desc).limit(200),
                                        protocol: @protocol, metric: @metric, model: @model)
+    @evidence = @evaluation[:best_per_model].to_h do |row|
+      run = MapaRun.find_by(id: row[:run_id])
+      [[row[:run_id], row[:model]], run ? MapaEvidenceGates.assess(run, protocol: @protocol, model: row[:model]) : nil]
+    end
   end
 end

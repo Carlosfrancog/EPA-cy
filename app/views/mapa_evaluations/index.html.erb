@@ -16,14 +16,15 @@
 </section>
 <section class="panel"><div class="panel-heading"><div><h3>Candidatos observados</h3><p class="muted">Melhor resultado por algoritmo neste filtro — não equivale a modelo campeão.</p></div></div>
 <% if @evaluation[:best_per_model].any? %>
-  <div class="table-wrap"><table class="runs-table"><thead><tr><th>Modelo</th><th>Experimento</th><th>Métrica selecionada</th><th>Suporte no teste</th></tr></thead><tbody>
+  <div class="table-wrap"><table class="runs-table"><thead><tr><th>Modelo</th><th>Experimento</th><th>Métrica selecionada</th><th>Suporte no teste</th><th>Parecer científico</th></tr></thead><tbody>
     <% @evaluation[:best_per_model].each do |row| %>
       <tr><td><strong><%= row[:model].humanize %></strong></td><td><%= link_to "##{row[:run_id]}", mapa_run_path(row[:run_id]), class: "text-link" %></td>
-      <td><%= number_with_precision(row[:score], precision: 3) %></td><td><%= row[:test_observations] %></td></tr>
+      <td><%= number_with_precision(row[:score], precision: 3) %></td><td><%= row[:test_observations] %></td><td><% evidence = @evidence[[row[:run_id], row[:model]]] %><strong><%= evidence&.dig(:status) || "unknown" %></strong><% if evidence %><details><summary>Critérios</summary><ul><% evidence[:reasons].each do |reason| %><li><%= reason %></li><% end %></ul></details><% end %></td></tr>
     <% end %>
   </tbody></table></div>
 <% else %><p class="muted">Nenhum experimento concluído compatível com este filtro.</p><% end %>
 </section>
+<section class="panel slim-panel"><strong>Gates de evidência:</strong> nenhum modelo é aprovado automaticamente para uso operacional. O parecer considera presença de GroupKFold, cobertura das três classes, coorte temporal independente e a ausência de validação externa real.</section>
 <section class="panel"><div class="panel-heading"><div><h3>Ranking de execuções</h3></div><span class="subtle-pill"><%= @evaluation[:rows].size %> RESULTADOS</span></div>
 <% if @evaluation[:rows].any? %>
   <div class="table-wrap"><table class="runs-table"><thead><tr><th>Experimento</th><th>Modelo</th><th>Seed</th><th>F1 macro</th><th>Acurácia bal.</th><th>Acurácia</th><th>Recall aprovado</th><th>Recall recuperação</th><th>Recall reprovado</th><th>Suporte A/R/F</th></tr></thead><tbody>
