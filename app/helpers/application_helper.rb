@@ -1,6 +1,6 @@
 module ApplicationHelper
   def section_icon(key)
-    { "dashboard" => "◫", "datasets" => "◈", "experiments" => "◇", "models" => "◎",
+    { "dashboard" => "◫", "datasets" => "◈", "experiments" => "◇", "mapa" => "✧", "models" => "◎",
       "integrity" => "⬡", "architecture" => "▦" }.fetch(key)
   end
 end
