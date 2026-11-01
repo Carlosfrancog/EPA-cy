@@ -77,6 +77,16 @@
         <h4>Protocolo N<%= protocol["cutoff_term"] %></h4>
         <p class="muted">Validação temporal: <strong><%= protocol.dig("temporal_holdout", "status") %></strong>
         <% if protocol.dig("temporal_holdout", "reason") %> · <%= protocol.dig("temporal_holdout", "reason") %><% end %></p>
+        <% if protocol.dig("temporal_holdout", "status") == "evaluated" %>
+          <div class="table-wrap"><table class="runs-table"><thead><tr><th>Modelo (coorte posterior)</th><th>F1 macro</th><th>Intervalo bootstrap 95%</th></tr></thead><tbody>
+            <% protocol.dig("temporal_holdout", "models").each do |tm| %>
+              <% uncertainty = tm["f1_macro_cluster_interval"] || {} %>
+              <tr><td><%= tm["model"].humanize %></td><td><%= number_with_precision(tm["f1_macro"], precision: 3) %></td>
+              <td><% if uncertainty["status"] == "estimated" %><%= number_with_precision(uncertainty["lower"], precision: 3) %>–<%= number_with_precision(uncertainty["upper"], precision: 3) %><% else %>Indisponível<% end %></td></tr>
+            <% end %>
+          </tbody></table></div>
+          <p class="muted">Intervalo percentílico 95%, reamostragem por aluno da coorte de teste, condicional ao modelo já treinado. Não mede incerteza de treinamento nem generalização real.</p>
+        <% end %>
         <div class="table-wrap"><table class="runs-table"><thead><tr><th>Modelo</th><th>F1 médio</th><th>Desvio</th><th>Faixa de F1</th><th>Folds sem classe</th></tr></thead><tbody>
         <% protocol.fetch("summaries", []).each do |summary| %>
           <% stats = summary["f1_macro_fold_distribution"] %>
