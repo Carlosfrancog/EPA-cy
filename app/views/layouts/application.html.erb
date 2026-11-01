@@ -20,7 +20,7 @@
         <% end %>
         <div class="nav-heading">WORKSPACE</div>
         <nav aria-label="Navegação principal" class="navigation">
-          <% [["dashboard", "Visão geral", root_path], ["datasets", "Datasets", datasets_path], ["experiments", "Experimentos", experiments_path], ["models", "Modelos", models_path], ["integrity", "Integridade", integrity_path], ["architecture", "Arquitetura", architecture_path]].each do |key, title, path| %>
+          <% [["dashboard", "Visão geral", root_path], ["datasets", "Datasets", datasets_path], ["experiments", "Experimentos", experiments_path], ["mapa", "MAPA", mapa_runs_path], ["models", "Modelos", models_path], ["integrity", "Integridade", integrity_path], ["architecture", "Arquitetura", architecture_path]].each do |key, title, path| %>
             <%= link_to path, class: "nav-link #{active_section?(key) ? 'active' : ''}", aria: { current: active_section?(key) ? "page" : nil } do %>
               <span class="nav-glyph" aria-hidden="true"><%= section_icon(key) %></span><span><%= title %></span>
             <% end %>
