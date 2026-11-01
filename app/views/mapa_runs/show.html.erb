@@ -38,6 +38,16 @@
       <% end %>
     </section>
   <% end %>
+  <section class="panel"><div class="eyebrow">MLFLOW · RASTREAMENTO OPCIONAL</div><h3>Identificadores dos modelos</h3>
+    <% if @run.mlflow_links.any? %>
+      <div class="table-wrap"><table class="runs-table"><thead><tr><th>Protocolo</th><th>Algoritmo</th><th>MLflow Run ID</th></tr></thead><tbody>
+      <% @run.mlflow_links.each do |entry| %>
+        <tr><td><%= entry["protocol"] %></td><td><%= entry["model"] %></td><td><code><%= entry["run_id"] %></code></td></tr>
+      <% end %></tbody></table></div>
+    <% else %>
+      <p class="muted">Rastreamento MLflow não configurado para esta execução. O relatório local continua disponível.</p>
+    <% end %>
+  </section>
   <section class="panel"><h3>Rastreabilidade</h3><p>Manifesto SHA-256: <code><%= @run.dataset_manifest_sha256 %></code></p>
   <p>Relatório SHA-256: <code><%= @run.report_sha256 %></code></p></section>
 <% else %><section class="panel"><p>Relatório indisponível.</p></section><% end %>

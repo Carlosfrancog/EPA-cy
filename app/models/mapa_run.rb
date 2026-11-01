@@ -9,6 +9,13 @@ class MapaRun < ApplicationRecord
     nil
   end
 
+  def mlflow_links
+    return [] if mlflow_links_json.blank?
+    JSON.parse(mlflow_links_json).fetch("runs", [])
+  rescue JSON::ParserError, KeyError
+    []
+  end
+
   def waiting?
     %w[queued running].include?(status)
   end
