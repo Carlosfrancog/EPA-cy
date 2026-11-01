@@ -9,6 +9,13 @@ class MapaRun < ApplicationRecord
     nil
   end
 
+  def lupa_report
+    return nil if lupa_json.blank?
+    JSON.parse(lupa_json)
+  rescue JSON::ParserError
+    nil
+  end
+
   def research_report
     return nil if research_json.blank?
     JSON.parse(research_json)

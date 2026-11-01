@@ -38,6 +38,23 @@
       <% end %>
     </section>
   <% end %>
+  <% if (lupa = @run.lupa_report) %>
+    <section class="panel"><div class="eyebrow">LUPA · EXPLICABILIDADE</div><h3>Sensibilidade preditiva por variável</h3>
+      <p class="muted">Importância por permutação no conjunto de teste do Random Forest. Queda do F1 macro ao embaralhar cada variável; não demonstra causalidade.</p>
+      <% lupa.fetch("explanations", []).each do |explanation| %>
+        <h4>Protocolo N<%= explanation["cutoff_term"] %> · Random Forest</h4>
+        <p class="muted">F1 de referência: <%= number_with_precision(explanation["baseline_f1_macro"], precision: 3) %> · Teste: <%= explanation["test_observations"] %> observações</p>
+        <div class="table-wrap"><table class="runs-table"><thead><tr><th>Variável</th><th>Queda média F1</th><th>Desvio</th></tr></thead><tbody>
+        <% explanation.fetch("features", []).each do |feature| %>
+          <tr><td><code><%= feature["name"] %></code></td><td><%= number_with_precision(feature["mean_f1_drop"], precision: 4) %></td>
+          <td><%= number_with_precision(feature["std_f1_drop"], precision: 4) %></td></tr>
+        <% end %></tbody></table></div>
+      <% end %>
+      <p class="muted">SHA-256 LUPA: <code><%= @run.lupa_sha256 %></code></p>
+    </section>
+  <% else %>
+    <section class="panel"><h3>LUPA</h3><p class="muted">Explicabilidade não disponível nesta execução histórica.</p></section>
+  <% end %>
   <% if (research = @run.research_report) %>
     <section class="panel"><div class="eyebrow">MAPA RESEARCH PROTOCOL v0.2</div><h3>Validação cruzada agrupada</h3>
       <p class="muted">Distribuição de folds, não intervalo de confiança populacional.</p>

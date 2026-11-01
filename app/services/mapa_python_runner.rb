@@ -61,7 +61,27 @@ class MapaPythonRunner
                      research["protocols"].is_a?(Array) &&
                      research["protocols"].map { |p| p["cutoff_term"] } == [1, 2, 3]
     raise Failure.new("research_report_invalid") unless valid_research
+    lupa_output = output_dir.join("lupa.json")
+    invoke("epa.core_engine.lupa", "--dataset", dataset.to_s,
+           "--seed", run.seed.to_s, "--repeats", "2", "--output", lupa_output.to_s)
+    raise Failure.new("lupa_report_missing") unless lupa_output.file?
+    raise Failure.new("lupa_report_too_large") if lupa_output.size > 150_000
+    lupa_raw = lupa_output.binread
+    lupa = JSON.parse(lupa_raw)
+    valid_lupa = lupa["schema_version"] == "epa.lupa.explainability.v1" &&
+                 lupa["dataset_classification"] == "SYNTHETIC" &&
+                 lupa["source_manifest_sha256"] == manifest_sha &&
+                 lupa["seed"] == run.seed &&
+                 lupa["explanations"].is_a?(Array) &&
+                 lupa["explanations"].map { |e| e["cutoff_term"] } == [1, 2, 3] &&
+                 lupa["explanations"].all? do |e|
+                   e["algorithm"] == "random_forest" && e["features"].is_a?(Array) &&
+                     e["features"].size == 11 &&
+                     e["features"].all? { |f| f["mean_f1_drop"].is_a?(Numeric) && f["mean_f1_drop"].finite? }
+                 end
+    raise Failure.new("lupa_report_invalid") unless valid_lupa
     { json: raw, sha256: report_sha, dataset_sha256: manifest_sha,
+      lupa_json: lupa_raw, lupa_sha256: Digest::SHA256.hexdigest(lupa_raw),
       mlflow_links_json: links_json, research_json: research_raw,
       research_sha256: Digest::SHA256.hexdigest(research_raw) }
   rescue JSON::ParserError
