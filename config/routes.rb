@@ -3,6 +3,7 @@ Rails.application.routes.draw do
   get "/datasets", to: "datasets#index", as: :datasets
   resources :experiments, only: [:index, :show, :create]
   post "/experiments/preview", to: "experiments#preview", as: :preview_experiment
+  get "/mapa/evaluation", to: "mapa_evaluations#index", as: :mapa_evaluation
   resources :mapa_runs, only: [:index, :show, :create], path: "mapa"
   get "/models", to: "models#index", as: :models
   get "/integrity", to: "integrity#index", as: :integrity
