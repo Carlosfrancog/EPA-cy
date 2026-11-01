@@ -94,7 +94,33 @@ class MapaPythonRunner
                   local["protocols"].map { |p| p["cutoff_term"] } == [1, 2, 3] &&
                   local["protocols"].all? { |p| p["cases"].is_a?(Array) && p["cases"].size <= 12 }
     raise Failure.new("lupa_local_invalid") unless valid_local
+    ext_path = output_dir.join("extended.json")
+    args = ["--dataset", dataset.to_s, "--seed", run.seed.to_s, "--output", ext_path.to_s]
+    args << "--xgboost" if ENV["EPA_MAPA_XGBOOST"] == "1"
+    invoke("epa.core_engine.mapa_extended", *args)
+    raise Failure.new("extended_missing") unless ext_path.file?
+    raise Failure.new("extended_too_large") if ext_path.size > 150_000
+    ext_raw = ext_path.binread
+    ext = JSON.parse(ext_raw)
+    expected = ENV["EPA_MAPA_XGBOOST"] == "1" ? %w[mlp xgboost] : %w[mlp]
+    valid = ext["schema_version"] == "epa.mapa.extended_models.v1" &&
+      ext["dataset_classification"] == "SYNTHETIC" &&
+      ext["source_manifest_sha256"] == manifest_sha &&
+      ext["algorithms"] == expected &&
+      ext["protocols"].is_a?(Array) &&
+      ext["protocols"].map { |p| p["cutoff_term"] } == [1, 2, 3] &&
+      ext["protocols"].all? do |p|
+        p["seed"] == run.seed && p["results"].is_a?(Array) &&
+          p["results"].map { |v| v["model"] } == expected &&
+          p["results"].all? do |v|
+            v["status"] == "skipped" ||
+              (v["status"] == "evaluated" &&
+                %w[f1_macro accuracy balanced_accuracy].all? { |key| v[key].is_a?(Numeric) && v[key].finite? && v[key].between?(0, 1) })
+          end
+      end
+    raise Failure.new("extended_invalid") unless valid
     { json: raw, sha256: report_sha, dataset_sha256: manifest_sha,
+      extended_json: ext_raw, extended_sha256: Digest::SHA256.hexdigest(ext_raw),
       lupa_local_json: local_raw, lupa_local_sha256: Digest::SHA256.hexdigest(local_raw),
       lupa_json: lupa_raw, lupa_sha256: Digest::SHA256.hexdigest(lupa_raw),
       mlflow_links_json: links_json, research_json: research_raw,

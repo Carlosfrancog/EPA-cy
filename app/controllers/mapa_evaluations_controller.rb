@@ -7,7 +7,7 @@ class MapaEvaluationsController < ApplicationController
                                        protocol: @protocol, metric: @metric, model: @model)
     @evidence = @evaluation[:best_per_model].to_h do |row|
       run = MapaRun.find_by(id: row[:run_id])
-      [[row[:run_id], row[:model]], run ? MapaEvidenceGates.assess(run, protocol: @protocol, model: row[:model]) : nil]
+      [[row[:run_id], row[:model]], run && MapaEvidenceGates::MODELS.include?(row[:model]) ? MapaEvidenceGates.assess(run, protocol: @protocol, model: row[:model]) : {status: "insufficient_evidence", reasons: ["Modelo estendido sem validação cruzada própria."], deployable: false}]
     end
   end
 end

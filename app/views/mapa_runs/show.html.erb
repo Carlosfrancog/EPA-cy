@@ -38,6 +38,20 @@
       <% end %>
     </section>
   <% end %>
+  <% if (ext = @run.extended_report) %>
+    <section class="panel"><div class="eyebrow">MAPA · MODELOS ESTENDIDOS</div><h3>MLP / XGBoost opcional</h3>
+      <% ext.fetch("protocols", []).each do |p| %>
+        <h4>Protocolo N<%= p["cutoff_term"] %></h4>
+        <div class="table-wrap"><table class="runs-table"><thead><tr><th>Modelo</th><th>Status</th><th>F1 macro</th><th>Acurácia balanceada</th></tr></thead><tbody>
+        <% p.fetch("results", []).each do |m| %>
+          <tr><td><%= m["model"].humanize %></td><td><%= m["status"] %></td>
+            <td><%= m["status"] == "evaluated" ? number_with_precision(m["f1_macro"], precision: 3) : "—" %></td>
+            <td><%= m["status"] == "evaluated" ? number_with_precision(m["balanced_accuracy"], precision: 3) : "—" %></td></tr>
+        <% end %></tbody></table></div>
+      <% end %>
+      <p class="muted">Pesquisa sintética; não há validação externa. SHA-256: <code><%= @run.extended_sha256 %></code></p>
+    </section>
+  <% end %>
   <% if (local = @run.lupa_local_report) %>
     <section class="panel"><div class="eyebrow">LUPA · DIAGNÓSTICO DE ERROS</div><h3>Casos sintéticos classificados incorretamente</h3>
       <p class="muted">Amostra de até 12 erros por protocolo, sem IDs de estudantes e sem registros individuais de notas. Substituição pela mediana é teste de sensibilidade, não intervenção.</p>

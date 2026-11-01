@@ -8,7 +8,7 @@
     <label for="protocol">Momento da avaliação</label>
     <%= select_tag :protocol, options_for_select([["Early · N1", "early"], ["Trajectory · N2", "trajectory"], ["Consolidated · N3", "consolidated"]], @protocol), class: "input" %>
     <label for="model">Algoritmo</label>
-    <%= select_tag :model, options_for_select([["Todos", "all"], ["Majority", "majority"], ["Regressão logística", "logistic_regression"], ["Random Forest", "random_forest"]], @model), class: "input" %>
+    <%= select_tag :model, options_for_select([["Todos", "all"], ["Majority", "majority"], ["Regressão logística", "logistic_regression"], ["Random Forest", "random_forest"], ["MLP", "mlp"], ["XGBoost", "xgboost"]], @model), class: "input" %>
     <label for="metric">Ordenar por</label>
     <%= select_tag :metric, options_for_select([["F1 macro", "f1_macro"], ["Acurácia balanceada", "balanced_accuracy"], ["Acurácia", "accuracy"]], @metric), class: "input" %>
     <%= f.submit "Atualizar comparação", class: "button button-primary" %>

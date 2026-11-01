@@ -1,7 +1,7 @@
 # Frozen per-report comparison: descriptive, not empirical champion promotion.
 class MapaEvaluation
   PROTOCOLS = %w[early trajectory consolidated].freeze
-  MODELS = %w[majority logistic_regression random_forest].freeze
+  MODELS = %w[majority logistic_regression random_forest mlp xgboost].freeze
   METRICS = %w[f1_macro balanced_accuracy accuracy].freeze
 
   def self.build(runs, protocol: "early", metric: "f1_macro", model: "all")
@@ -21,7 +21,15 @@ class MapaEvaluation
       next unless support.is_a?(Hash) && %w[approved recovery failed].all? { |key| support[key].is_a?(Integer) && support[key] >= 0 }
       total = support.values_at("approved", "recovery", "failed").sum
       next unless total > 0
-      block.fetch("results", []).each do |result|
+      extension = run.extended_report
+      ext_block = if extension.is_a?(Hash) &&
+                     extension["schema_version"] == "epa.mapa.extended_models.v1" &&
+                     extension["dataset_classification"] == "SYNTHETIC" &&
+                     extension["source_manifest_sha256"] == run.dataset_manifest_sha256
+        extension.fetch("protocols", []).find { |item| item["protocol"] == protocol && item["seed"] == run.seed }
+      end
+      ext_results = ext_block.is_a?(Hash) ? ext_block.fetch("results", []).select { |item| item["status"] == "evaluated" } : []
+      (block.fetch("results", []) + ext_results).each do |result|
         next unless result.is_a?(Hash) && MODELS.include?(result["model"])
         next if model != "all" && model != result["model"]
         next unless METRICS.all? { |name| result[name].is_a?(Numeric) && result[name].finite? && result[name].between?(0, 1) }

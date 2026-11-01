@@ -13,6 +13,7 @@ class MapaRunnerJob < ApplicationJob
                   report_sha256: evidence.fetch(:sha256),
                   dataset_manifest_sha256: evidence.fetch(:dataset_sha256),
                   mlflow_links_json: evidence[:mlflow_links_json],
+                  extended_json: evidence[:extended_json], extended_sha256: evidence[:extended_sha256],
                   lupa_local_json: evidence[:lupa_local_json], lupa_local_sha256: evidence[:lupa_local_sha256],
                   lupa_json: evidence[:lupa_json], lupa_sha256: evidence[:lupa_sha256],
                   research_json: evidence[:research_json], research_sha256: evidence[:research_sha256],
