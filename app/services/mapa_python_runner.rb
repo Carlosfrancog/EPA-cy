@@ -31,8 +31,11 @@ class MapaPythonRunner
     raise Failure.new("output_already_exists") if output.exist?
 
     arguments = ["--dataset", dataset.to_s, "--seed", run.seed.to_s, "--output", output.to_s]
-    if ENV["EPA_MLFLOW_TRACKING_URI"].present?
-      arguments += ["--mlflow-uri", ENV.fetch("EPA_MLFLOW_TRACKING_URI")]
+    tracking_enabled = ENV["EPA_MLFLOW_TRACKING_URI"].present?
+    links_path = output_dir.join("mlflow-links.json")
+    if tracking_enabled
+      arguments += ["--mlflow-uri", ENV.fetch("EPA_MLFLOW_TRACKING_URI"),
+                    "--mlflow-link-output", links_path.to_s]
     end
     invoke("epa.core_engine.mapa", *arguments)
     raise Failure.new("report_missing") unless output.file?
@@ -43,7 +46,10 @@ class MapaPythonRunner
     manifest_sha = Digest::SHA256.file(dataset.join("manifest.json")).hexdigest
     raise Failure.new("report_invalid") unless valid_report?(report, manifest_sha)
 
-    { json: raw, sha256: Digest::SHA256.hexdigest(raw), dataset_sha256: manifest_sha }
+    report_sha = Digest::SHA256.hexdigest(raw)
+    links_json = tracking_enabled ? verified_links!(links_path, report, report_sha) : nil
+    { json: raw, sha256: report_sha, dataset_sha256: manifest_sha,
+      mlflow_links_json: links_json }
   rescue JSON::ParserError
     raise Failure.new("report_invalid")
   end
@@ -71,6 +77,29 @@ class MapaPythonRunner
     raise Failure.new("engine_timeout")
   rescue Errno::ENOENT
     raise Failure.new("python_missing")
+  end
+
+  def verified_links!(path, report, sha)
+    raise Failure.new("mlflow_links_missing") unless path.file?
+    raise Failure.new("mlflow_links_invalid") if path.size > 30_000
+    links = JSON.parse(path.binread)
+    expected = report.fetch("baselines").flat_map do |block|
+      block.fetch("results").map { |result| [block.fetch("protocol"), result.fetch("model")] }
+    end
+    runs = links["runs"]
+    valid = links["schema_version"] == "epa.mapa.mlflow_links.v1" &&
+            links["report_sha256"] == sha && runs.is_a?(Array) &&
+            runs.length == expected.length && expected.length == 9 &&
+            runs.each_with_index.all? do |entry, index|
+              entry.is_a?(Hash) &&
+                [entry["protocol"], entry["model"]] == expected[index] &&
+                entry["run_id"].is_a?(String) &&
+                entry["run_id"].match?(/\\A[0-9a-f]{32,64}\\z/i)
+            end && runs.map { |entry| entry["run_id"] }.uniq.length == 9
+    raise Failure.new("mlflow_links_invalid") unless valid
+    JSON.generate(links)
+  rescue JSON::ParserError, KeyError
+    raise Failure.new("mlflow_links_invalid")
   end
 
   def valid_report?(report, digest)

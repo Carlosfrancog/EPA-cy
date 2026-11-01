@@ -12,6 +12,7 @@ class MapaRunnerJob < ApplicationJob
       run.update!(status: "completed", report_json: evidence.fetch(:json),
                   report_sha256: evidence.fetch(:sha256),
                   dataset_manifest_sha256: evidence.fetch(:dataset_sha256),
+                  mlflow_links_json: evidence[:mlflow_links_json],
                   finished_at: Time.current)
     rescue MapaPythonRunner::Failure => e
       run.update!(status: "failed", failure_code: e.code, finished_at: Time.current)

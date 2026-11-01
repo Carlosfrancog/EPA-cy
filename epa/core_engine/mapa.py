@@ -145,17 +145,39 @@ def main() -> None:
     parser.add_argument("--mlflow-uri", type=str, default=None,
                         help="Optional MLflow tracking URI (for example sqlite:///data/mlflow.db)")
     parser.add_argument("--mlflow-experiment", type=str, default="EPA MAPA Synthetic")
+    parser.add_argument("--mlflow-link-output", type=Path, default=None,
+                        help="Optional immutable JSON link manifest for the parent Rails run")
     args = parser.parse_args()
     if args.output.exists():
         parser.error("output exists; benchmark reports are immutable")
+    if args.mlflow_link_output and not args.mlflow_uri:
+        parser.error("link output requires --mlflow-uri")
+    if args.mlflow_link_output and args.mlflow_link_output.exists():
+        parser.error("MLflow link output already exists")
     result = run(args.dataset, seed=args.seed)
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(result, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     if args.mlflow_uri:
         from epa.core_engine.mapa_tracking import log_benchmark
-        log_benchmark(result, tracking_uri=args.mlflow_uri,
-                      experiment_name=args.mlflow_experiment,
-                      report_path=args.output)
+        ids = log_benchmark(result, tracking_uri=args.mlflow_uri,
+                            experiment_name=args.mlflow_experiment,
+                            report_path=args.output)
+        if args.mlflow_link_output:
+            import hashlib
+            pairs = [(block["protocol"], model["model"])
+                     for block in result["baselines"] for model in block["results"]]
+            if len(ids) != len(pairs):
+                raise RuntimeError("incomplete MLflow run links")
+            links = {
+                "schema_version": "epa.mapa.mlflow_links.v1",
+                "report_sha256": hashlib.sha256(args.output.read_bytes()).hexdigest(),
+                "runs": [{"protocol": protocol, "model": model, "run_id": run_id}
+                         for (protocol, model), run_id in zip(pairs, ids)],
+            }
+            args.mlflow_link_output.parent.mkdir(parents=True, exist_ok=True)
+            with args.mlflow_link_output.open("x", encoding="utf-8") as stream:
+                json.dump(links, stream, ensure_ascii=False, indent=2)
+                stream.write("\\n")
 
 
 if __name__ == "__main__":
