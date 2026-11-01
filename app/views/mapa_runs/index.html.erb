@@ -1,0 +1,30 @@
+<% content_for :title, "MAPA Laboratory" %>
+<% content_for :section, "MAPA / Treinamentos" %>
+<div class="page-heading"><div><div class="eyebrow">EPA · MAPA CORE</div><h1>Treinamento MAPA</h1>
+<p>Experimentos sintéticos de classificação por disciplina, com previsões após N1, N2 e N3.</p></div><span class="tag">PESQUISA · SINTÉTICA</span></div>
+<div class="two-columns">
+  <section class="panel">
+    <div class="panel-heading"><div><div class="eyebrow">EXECUÇÃO LOCAL</div><h3>Novo benchmark</h3></div></div>
+    <%= form_with url: mapa_runs_path, method: :post, class: "experiment-form" do |f| %>
+      <label for="seed">Seed de treinamento</label>
+      <%= number_field_tag :seed, "20261029", min: 0, max: 999999999, required: true, class: "input" %>
+      <p>Executa três protocolos independentes: <strong>Early (N1)</strong>, <strong>Trajectory (N2)</strong> e <strong>Consolidated (N3)</strong>. Cada um compara baseline majoritário, regressão logística e Random Forest de 200 árvores.</p>
+      <%= f.submit "Treinar MAPA →", class: "button button-primary button-wide" %>
+    <% end %>
+  </section>
+  <section class="panel"><div class="eyebrow">CONTRATO CIENTÍFICO</div><h3>Dados e restrições</h3>
+    <div class="detail-list"><div><span>Fonte</span><strong>GENESIS v2 · 80 alunos sintéticos</strong></div>
+    <div><span>Separação</span><strong>Por aluno (sem sobreposição)</strong></div>
+    <div><span>Classes</span><strong>Aprovado · Recuperação · Reprovado</strong></div></div>
+    <p class="muted">Classes e limiares ilustrativos. Não há evidência de acurácia em estudantes reais nem previsão de evasão.</p>
+  </section>
+</div>
+<section class="panel"><div class="panel-heading"><div><h3>Histórico MAPA</h3></div></div>
+  <% if @runs.any? %>
+    <div class="table-wrap"><table class="runs-table"><thead><tr><th>Execução</th><th>Seed</th><th>Status</th><th>Relatório</th></tr></thead><tbody>
+    <% @runs.each do |run| %><tr><td>#<%= run.id %></td><td><%= run.seed %></td>
+      <td><span class="run-status status-<%= run.status %>"><%= run.status.upcase %></span></td>
+      <td><%= link_to "Ver resultados", mapa_run_path(run), class: "text-link" %></td></tr><% end %>
+    </tbody></table></div>
+  <% else %><p class="muted">Nenhuma execução MAPA registrada.</p><% end %>
+</section>

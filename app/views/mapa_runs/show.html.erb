@@ -1,0 +1,44 @@
+<% content_for :title, "MAPA ##{@run.id}" %>
+<% content_for :section, "MAPA / ##{@run.id}" %>
+<% if @run.waiting? %><% content_for :head do %><meta http-equiv="refresh" content="4"><% end %><% end %>
+<div class="page-heading"><div><div class="eyebrow">EPA MAPA · EXECUÇÃO #<%= @run.id %></div><h1>Relatório MAPA</h1>
+<p>Comparação científica experimental com dados exclusivamente sintéticos.</p></div>
+<%= link_to "← Histórico MAPA", mapa_runs_path, class: "button button-outline" %></div>
+<div class="stats-grid">
+  <div class="stat-card"><div class="stat-label">Estado</div><div class="stat-value stat-value-text"><%= @run.status.upcase %></div></div>
+  <div class="stat-card"><div class="stat-label">Seed</div><div class="stat-value"><%= @run.seed %></div></div>
+  <div class="stat-card"><div class="stat-label">Protocolos</div><div class="stat-value">N1 · N2 · N3</div></div>
+  <div class="stat-card"><div class="stat-label">Fonte</div><div class="stat-value stat-value-text">Sintética</div></div>
+</div>
+<% if @run.waiting? %>
+  <div class="panel"><h3>Treinamento em andamento</h3><p>Atualização automática a cada quatro segundos.</p></div>
+<% elsif @run.status == "failed" %>
+  <div class="panel"><h3>Treinamento não concluído</h3><p>Código de erro: <code><%= @run.failure_code %></code></p></div>
+<% elsif @report %>
+  <% @report.fetch("baselines", []).each do |block| %>
+    <section class="panel">
+      <div class="panel-heading"><div><div class="eyebrow">PROTOCOLO N<%= block["cutoff_term"] %></div>
+        <h3><%= {"early" => "MAPA Early", "trajectory" => "MAPA Trajectory", "consolidated" => "MAPA Consolidated"}.fetch(block["protocol"], block["protocol"]) %></h3></div>
+        <span class="subtle-pill">F1 MACRO · 3 CLASSES</span>
+      </div>
+      <div class="table-wrap"><table class="runs-table"><thead><tr><th>Modelo</th><th>Acurácia</th><th>Balanceada</th><th>F1 macro</th></tr></thead><tbody>
+      <% block.fetch("results", []).each do |model| %>
+        <tr><td><%= model["model"].humanize %></td>
+        <td><%= number_to_percentage(model["accuracy"] * 100, precision: 1) %></td>
+        <td><%= number_to_percentage(model["balanced_accuracy"] * 100, precision: 1) %></td>
+        <td><%= number_with_precision(model["f1_macro"], precision: 3) %></td></tr>
+      <% end %></tbody></table></div>
+      <p class="muted">Observações: <%= block["train_observations"] %> treino / <%= block["test_observations"] %> teste. Suporte por classe no teste: <%= block["test_class_counts"].map { |key, val| "#{key}: #{val}" }.join(" · ") %>.</p>
+      <% block.fetch("results", []).each do |model| %>
+        <details><summary><strong><%= model["model"].humanize %></strong> — matriz de confusão 3×3 e recall por classe</summary>
+          <div class="table-wrap"><table class="runs-table"><thead><tr><th>Real / Previsto</th><% block["classes"].each do |label| %><th><%= label %></th><% end %></tr></thead>
+          <tbody><% model["confusion_matrix"].each_with_index do |row, index| %><tr><th><%= block["classes"][index] %></th><% row.each do |value| %><td><%= value %></td><% end %></tr><% end %></tbody></table></div>
+          <p>Recall: <%= model["recall_by_class"].map { |key, val| "#{key} #{number_to_percentage(val * 100, precision: 1)}" }.join(" · ") %></p>
+        </details>
+      <% end %>
+    </section>
+  <% end %>
+  <section class="panel"><h3>Rastreabilidade</h3><p>Manifesto SHA-256: <code><%= @run.dataset_manifest_sha256 %></code></p>
+  <p>Relatório SHA-256: <code><%= @run.report_sha256 %></code></p></section>
+<% else %><section class="panel"><p>Relatório indisponível.</p></section><% end %>
+<div class="panel slim-panel"><strong>Limite da pesquisa:</strong> os dados são simulados. Os resultados não comprovam eficácia preditiva em populações escolares reais.</div>
