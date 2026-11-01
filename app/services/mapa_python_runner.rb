@@ -30,8 +30,11 @@ class MapaPythonRunner
     output = output_dir.join("report.json")
     raise Failure.new("output_already_exists") if output.exist?
 
-    invoke("epa.core_engine.mapa", "--dataset", dataset.to_s,
-           "--seed", run.seed.to_s, "--output", output.to_s)
+    arguments = ["--dataset", dataset.to_s, "--seed", run.seed.to_s, "--output", output.to_s]
+    if ENV["EPA_MLFLOW_TRACKING_URI"].present?
+      arguments += ["--mlflow-uri", ENV.fetch("EPA_MLFLOW_TRACKING_URI")]
+    end
+    invoke("epa.core_engine.mapa", *arguments)
     raise Failure.new("report_missing") unless output.file?
     raise Failure.new("report_too_large") if output.size > MAX_REPORT_BYTES
 

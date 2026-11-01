@@ -142,12 +142,20 @@ def main() -> None:
     parser.add_argument("--dataset", type=Path, required=True)
     parser.add_argument("--seed", type=int, default=20261029)
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--mlflow-uri", type=str, default=None,
+                        help="Optional MLflow tracking URI (for example sqlite:///data/mlflow.db)")
+    parser.add_argument("--mlflow-experiment", type=str, default="EPA MAPA Synthetic")
     args = parser.parse_args()
     if args.output.exists():
         parser.error("output exists; benchmark reports are immutable")
     result = run(args.dataset, seed=args.seed)
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(result, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    if args.mlflow_uri:
+        from epa.core_engine.mapa_tracking import log_benchmark
+        log_benchmark(result, tracking_uri=args.mlflow_uri,
+                      experiment_name=args.mlflow_experiment,
+                      report_path=args.output)
 
 
 if __name__ == "__main__":
