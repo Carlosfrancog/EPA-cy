@@ -18,6 +18,7 @@ from sklearn.metrics import accuracy_score, f1_score, recall_score, confusion_ma
 from sklearn.model_selection import GroupKFold
 
 from epa.core_engine.mapa import CLASSES, models, feature_vector
+from epa.core_engine.mapa_uncertainty import cluster_bootstrap_f1
 from epa.core_engine.student_timeline import CUTS, read_verified_v2, build_snapshots
 
 SCHEMA = "epa.mapa.research_protocol.v2"
@@ -103,7 +104,12 @@ def evaluate_protocol(rows, *, cutoff, seed=20261029, n_splits=3):
                         "models": []}
             for name, candidate in models(seed).items():
                 candidate.fit(x[train], y[train])
-                temporal["models"].append({"model": name, **_score(y[test], candidate.predict(x[test]))})
+                predictions = candidate.predict(x[test])
+                temporal["models"].append({
+                    "model": name, **_score(y[test], predictions),
+                    "f1_macro_cluster_interval": cluster_bootstrap_f1(
+                        y[test], predictions, groups[test], seed=seed, repetitions=300),
+                })
     return {
         "protocol": next(k for k, v in CUTS.items() if v == cutoff), "cutoff_term": cutoff,
         "fold_strategy": "GroupKFold_by_student", "n_splits": n_splits,
@@ -128,7 +134,8 @@ def run(directory: Path, *, seed=20261029, n_splits=3):
         "limitations": [
             "Simulated student histories are not independent empirical evidence.",
             "Fold dispersion is not a statistical confidence interval.",
-            "Later-year reuse of the same students blocks a strict independent temporal-cohort estimate.",
+            "Overlapping students block independent temporal-cohort estimation.",
+            "Cluster-bootstrap intervals are conditional on a fitted model and synthetic test-cohort sample.",
             "Class rarity can make per-class recall unstable; inspect each fold.",
         ],
     }
