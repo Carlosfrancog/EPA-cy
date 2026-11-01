@@ -119,7 +119,31 @@ class MapaPythonRunner
           end
       end
     raise Failure.new("extended_invalid") unless valid
+    extended_research_path = output_dir.join("research-extended.json")
+    ext_research_args = ["--dataset", dataset.to_s, "--seed", run.seed.to_s,
+                         "--folds", "3", "--output", extended_research_path.to_s]
+    ext_research_args << "--xgboost" if ENV["EPA_MAPA_XGBOOST"] == "1"
+    invoke("epa.core_engine.mapa_research_extended", *ext_research_args)
+    raise Failure.new("extended_research_missing") unless extended_research_path.file?
+    raise Failure.new("extended_research_too_large") if extended_research_path.size > 900_000
+    ext_research_raw = extended_research_path.binread
+    ext_research = JSON.parse(ext_research_raw)
+    expected_ext_models = ENV["EPA_MAPA_XGBOOST"] == "1" ? %w[mlp xgboost] : %w[mlp]
+    valid_ext_research = ext_research["schema_version"] == "epa.mapa.research_extended.v1" &&
+      ext_research["dataset_classification"] == "SYNTHETIC" &&
+      ext_research["source_manifest_sha256"] == manifest_sha &&
+      ext_research["seed"] == run.seed &&
+      ext_research["algorithms"] == expected_ext_models &&
+      ext_research["protocols"].is_a?(Array) &&
+      ext_research["protocols"].map { |p| p["cutoff_term"] } == [1, 2, 3] &&
+      ext_research["protocols"].all? do |p|
+        p["algorithms"] == expected_ext_models && p["n_splits"] == 3 &&
+          p["summaries"].is_a?(Array) && p["summaries"].map { |s| s["model"] } == expected_ext_models
+      end
+    raise Failure.new("extended_research_invalid") unless valid_ext_research
     { json: raw, sha256: report_sha, dataset_sha256: manifest_sha,
+      research_extended_json: ext_research_raw,
+      research_extended_sha256: Digest::SHA256.hexdigest(ext_research_raw),
       extended_json: ext_raw, extended_sha256: Digest::SHA256.hexdigest(ext_raw),
       lupa_local_json: local_raw, lupa_local_sha256: Digest::SHA256.hexdigest(local_raw),
       lupa_json: lupa_raw, lupa_sha256: Digest::SHA256.hexdigest(lupa_raw),

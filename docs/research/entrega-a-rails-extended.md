@@ -1,0 +1,3 @@
+# Entrega A — Rails Extended Research
+
+New local MAPA jobs execute `mapa_research_extended` with GroupKFold for MLP and optional XGBoost, persist a provenance-checked immutable JSON report and SHA-256, and display fold statistics per N1/N2/N3. The Evidence Gates now read the correct research report for each algorithm and still require independent temporal validation, class coverage and external real-world validation; no model is deployable. Historical runs without extended research remain readable. `EPA_MAPA_XGBOOST=1` requires the optional boosting extra. Original three-model benchmark, nine MLflow records, and MAPA v2 contract remain unchanged.

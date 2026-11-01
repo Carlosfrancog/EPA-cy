@@ -17,6 +17,8 @@ class MapaRunnerJob < ApplicationJob
                   lupa_local_json: evidence[:lupa_local_json], lupa_local_sha256: evidence[:lupa_local_sha256],
                   lupa_json: evidence[:lupa_json], lupa_sha256: evidence[:lupa_sha256],
                   research_json: evidence[:research_json], research_sha256: evidence[:research_sha256],
+                  research_extended_json: evidence[:research_extended_json],
+                  research_extended_sha256: evidence[:research_extended_sha256],
                   finished_at: Time.current)
     rescue MapaPythonRunner::Failure => e
       run.update!(status: "failed", failure_code: e.code, finished_at: Time.current)
