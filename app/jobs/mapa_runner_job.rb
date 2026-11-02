@@ -7,6 +7,7 @@ class MapaRunnerJob < ApplicationJob
     return unless claimed == 1
 
     run = MapaRun.find(run_id)
+    Rails.logger.info({ event: "mapa_started", run_id: run.id, job_id: job_id }.to_json)
     begin
       evidence = runner.call(run)
       run.update!(status: "completed", report_json: evidence.fetch(:json),
@@ -20,8 +21,10 @@ class MapaRunnerJob < ApplicationJob
                   research_extended_json: evidence[:research_extended_json],
                   research_extended_sha256: evidence[:research_extended_sha256],
                   finished_at: Time.current)
+      Rails.logger.info({ event: "mapa_completed", run_id: run.id, job_id: job_id }.to_json)
     rescue MapaPythonRunner::Failure => e
       run.update!(status: "failed", failure_code: e.code, finished_at: Time.current)
+      Rails.logger.warn({ event: "mapa_failed", run_id: run.id, failure_code: e.code }.to_json)
     rescue StandardError => e
       Rails.logger.error("MAPA run #{run_id} failed: #{e.class}")
       run.update!(status: "failed", failure_code: "internal_error", finished_at: Time.current)
