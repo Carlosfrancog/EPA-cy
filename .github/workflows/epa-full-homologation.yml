@@ -1,0 +1,45 @@
+name: EPA full MAPA homologation
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.3'
+          bundler-cache: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: bundle install
+      - run: python -m pip install -e ".[dev,research]"
+      - run: RAILS_ENV=test bundle exec rails db:prepare
+      - run: RAILS_ENV=test bundle exec rails test
+      - run: python -m pytest -q
+      - name: Run full synthetic MAPA research and audit
+        env:
+          RAILS_ENV: test
+          EPA_PYTHON_EXECUTABLE: python
+        run: |
+          bundle exec rails runner - <<'RUBY'
+          run = MapaRun.create!(seed: 20261102)
+          MapaRunnerJob.perform_now(run.id)
+          run.reload
+          abort("MAPA failed: #{run.failure_code}") unless run.status == "completed"
+          integrity = MapaIntegrityAudit.inspect_run(run)
+          abort("Artifact checks failed") unless integrity[:invalid] == 0 && integrity[:verified] == 6
+          science = SentinelResearchAudit.inspect_run(run)
+          abort("Research metadata checks failed") unless science.all? { |x| x[:status] == "checked" }
+          abort("Missing LUPA scene") unless LupaScene.for_run(run)
+          comparison = MapaPairedComparison.build(run, protocol: "early")
+          abort("Missing paired comparison") unless comparison[:status] == "descriptive"
+          puts "MAPA HOMOLOGATION PASSED: run=#{run.id}, artifacts=#{integrity[:verified]}, synthetic_only=true"
+          RUBY
+      - name: Diagnostics on failure
+        if: failure()
+        run: tail -n 120 log/test.log || true

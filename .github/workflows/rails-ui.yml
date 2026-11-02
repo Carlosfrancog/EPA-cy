@@ -44,6 +44,11 @@ jobs:
           npx --yes playwright@1.56.1 screenshot --browser chromium --viewport-size "1440,960" --wait-for-timeout 1200 http://127.0.0.1:3000/experiments tmp/screenshots/02-experiments.png
           npx --yes playwright@1.56.1 screenshot --browser chromium --viewport-size "1440,960" --wait-for-timeout 1200 http://127.0.0.1:3000/experiments/1 tmp/screenshots/03-results.png
           npx --yes playwright@1.56.1 screenshot --browser chromium --viewport-size "390,844" --wait-for-timeout 1200 http://127.0.0.1:3000/experiments tmp/screenshots/04-mobile.png
+      - name: Capture research workspace pages
+        run: |
+          npx --yes playwright@1.56.1 screenshot --browser chromium --viewport-size "1440,960" http://127.0.0.1:3000/mapa tmp/screenshots/05-mapa.png
+          npx --yes playwright@1.56.1 screenshot --browser chromium --viewport-size "1440,960" http://127.0.0.1:3000/lupa tmp/screenshots/06-lupa.png
+          npx --yes playwright@1.56.1 screenshot --browser chromium --viewport-size "1440,960" http://127.0.0.1:3000/integrity tmp/screenshots/07-integrity.png
       - uses: actions/upload-artifact@v4
         if: always()
         with:
