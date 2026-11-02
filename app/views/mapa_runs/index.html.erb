@@ -20,11 +20,25 @@
     <p class="muted">Classes e limiares ilustrativos. Não há evidência de acurácia em estudantes reais nem previsão de evasão.</p>
   </section>
 </div>
+<section class="panel">
+  <div class="panel-heading"><h3>Observabilidade dos jobs MAPA</h3></div>
+  <p>Últimas 30 execuções:
+    <% @telemetry[:status_counts].each do |status, count| %>
+      <strong><%= status %></strong>: <%= count %> ·
+    <% end %>
+    Prolongadas (mais de 15 min): <strong><%= @telemetry[:prolonged_count] %></strong>.
+    Duração média dos concluídos: <strong><%= @telemetry[:mean_duration] || "indisponível" %></strong> segundos.
+  </p>
+  <p class="muted">Indicadores informativos; não interrompem nem reexecutam jobs.</p>
+</section>
 <section class="panel"><div class="panel-heading"><div><h3>Histórico MAPA</h3></div></div>
   <% if @runs.any? %>
-    <div class="table-wrap"><table class="runs-table"><thead><tr><th>Execução</th><th>Seed</th><th>Status</th><th>Relatório</th></tr></thead><tbody>
+    <div class="table-wrap"><table class="runs-table"><thead><tr><th>Execução</th><th>Seed</th><th>Status</th><th>Duração</th><th>Alerta</th><th>Relatório</th></tr></thead><tbody>
     <% @runs.each do |run| %><tr><td>#<%= run.id %></td><td><%= run.seed %></td>
       <td><span class="run-status status-<%= run.status %>"><%= run.status.upcase %></span></td>
+      <% metric = @telemetry[:rows].find { |entry| entry[:id] == run.id } %>
+      <td><%= metric[:duration] ? "#{metric[:duration]}s" : "—" %></td>
+      <td><%= metric[:prolonged] ? "Execução prolongada" : (run.failure_code.presence || "—") %></td>
       <td><%= link_to "Ver resultados", mapa_run_path(run), class: "text-link" %></td></tr><% end %>
     </tbody></table></div>
   <% else %><p class="muted">Nenhuma execução MAPA registrada.</p><% end %>

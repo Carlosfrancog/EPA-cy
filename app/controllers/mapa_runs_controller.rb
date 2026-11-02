@@ -3,6 +3,7 @@ class MapaRunsController < ApplicationController
 
   def index
     @runs = MapaRun.order(created_at: :desc).limit(30)
+    @telemetry = MapaRunTelemetry.summarize(@runs)
   end
 
   def create
