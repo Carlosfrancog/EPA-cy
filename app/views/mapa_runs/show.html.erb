@@ -38,6 +38,24 @@
       <% end %>
     </section>
   <% end %>
+  <% if (research_ext = @run.research_extended_report) %>
+    <section class="panel"><div class="eyebrow">MAPA · CIÊNCIA DOS MODELOS ESTENDIDOS</div>
+      <h3>Validação cruzada de MLP / XGBoost</h3>
+      <p class="muted">Distribuição entre folds agrupados por estudante; não constitui intervalo de confiança. Evidência exclusivamente sintética.</p>
+      <% research_ext.fetch("protocols", []).each do |protocol| %>
+        <h4>N<%= protocol["cutoff_term"] %> · Validação temporal: <%= protocol.dig("temporal_holdout", "status") %></h4>
+        <div class="table-wrap"><table class="runs-table"><thead><tr><th>Modelo</th><th>Estado</th><th>F1 médio CV</th><th>Desvio CV</th><th>Folds com ausências</th></tr></thead><tbody>
+        <% protocol.fetch("summaries", []).each do |summary| %>
+          <% dist = summary["f1_macro_fold_distribution"] || {} %>
+          <tr><td><%= summary["model"].humanize %></td><td><%= summary["status"] %></td>
+          <td><%= dist["mean"] ? number_with_precision(dist["mean"], precision: 3) : "—" %></td>
+          <td><%= dist["std"] ? number_with_precision(dist["std"], precision: 3) : "—" %></td>
+          <td><%= summary["missing_class_folds"] %></td></tr>
+        <% end %></tbody></table></div>
+      <% end %>
+      <p class="muted">SHA-256: <code><%= @run.research_extended_sha256 %></code></p>
+    </section>
+  <% end %>
   <% if (ext = @run.extended_report) %>
     <section class="panel"><div class="eyebrow">MAPA · MODELOS ESTENDIDOS</div><h3>MLP / XGBoost opcional</h3>
       <% ext.fetch("protocols", []).each do |p| %>

@@ -30,6 +30,13 @@ class MapaRun < ApplicationRecord
     nil
   end
 
+  def research_extended_report
+    return nil if research_extended_json.blank?
+    JSON.parse(research_extended_json)
+  rescue JSON::ParserError
+    nil
+  end
+
   def research_report
     return nil if research_json.blank?
     JSON.parse(research_json)

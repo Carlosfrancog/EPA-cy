@@ -1,14 +1,14 @@
 # Transparent research-evidence gates, NOT a deployment or champion selector.
 class MapaEvidenceGates
   PROTOCOLS = %w[early trajectory consolidated].freeze
-  MODELS = %w[majority logistic_regression random_forest].freeze
+  MODELS = %w[majority logistic_regression random_forest mlp xgboost].freeze
 
   def self.assess(run, protocol:, model:)
     raise ArgumentError, "invalid protocol" unless PROTOCOLS.include?(protocol)
     raise ArgumentError, "invalid model" unless MODELS.include?(model)
     reasons = []
-    evidence = run.research_report
-    unless evidence.is_a?(Hash) && evidence["schema_version"] == "epa.mapa.research_protocol.v2" &&
+    evidence = %w[mlp xgboost].include?(model) ? run.research_extended_report : run.research_report
+    unless evidence.is_a?(Hash) && evidence["schema_version"] == (%w[mlp xgboost].include?(model) ? "epa.mapa.research_extended.v1" : "epa.mapa.research_protocol.v2") &&
            evidence["dataset_classification"] == "SYNTHETIC" &&
            evidence["source_manifest_sha256"] == run.dataset_manifest_sha256 &&
            evidence["seed"] == run.seed
@@ -29,7 +29,7 @@ class MapaEvidenceGates
     end
     temporal = block&.dig("temporal_holdout")
     unless temporal.is_a?(Hash) && temporal["status"] == "evaluated" &&
-           temporal["models"].is_a?(Array) && temporal["models"].any? { |m| m["model"] == model }
+           temporal["models"].is_a?(Array) && temporal["models"].any? { |m| m["model"] == model && m["status"] != "skipped" }
       reasons << "Validação temporal independente não disponível."
     end
     reasons << "Dados exclusivamente sintéticos; validação externa real pendente."
