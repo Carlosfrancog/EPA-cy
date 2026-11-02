@@ -16,3 +16,16 @@
 </ul></details></td></tr>
 <% end %></tbody></table></div>
 <% end %></section>
+
+<section class="panel"><div class="panel-heading"><div><div class="eyebrow">SENTINEL · EVIDÊNCIA DECLARADA</div><h3>Verificação estrutural dos protocolos científicos</h3></div></div>
+<p class="muted">Analisa os metadados persistidos de validação agrupada e temporal. Contagens e declarações não comprovam ausência de sobreposição entre identificadores de alunos; essa verificação depende do dataset verificado durante a execução do motor.</p>
+<% if @scientific_audits.empty? %><p class="muted">Sem relatórios concluídos para avaliar.</p><% else %>
+<div class="table-wrap"><table class="runs-table"><thead><tr><th>Experimento</th><th>Protocolo</th><th>Estado</th><th>Achados</th></tr></thead><tbody>
+<% @scientific_audits.each do |audit| %>
+  <% audit[:reports].each do |item| %>
+    <tr><td><%= link_to "##{audit[:run_id]}", mapa_run_path(audit[:run_id]), class: "text-link" %></td>
+    <td><%= item[:name] %></td><td><%= item[:status] %></td>
+    <td><%= item[:findings].empty? ? "Sem anomalias estruturais detectadas" : item[:findings].join(" · ") %></td></tr>
+  <% end %>
+<% end %></tbody></table></div>
+<% end %></section>
