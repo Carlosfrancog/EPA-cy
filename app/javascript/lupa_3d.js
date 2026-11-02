@@ -18,6 +18,12 @@ const initialize = (root) => {
   if (values.length !== 33 || values.some(v=>!Number.isFinite(v.y)||v.x<0)) return;
   const bound = Math.max(.001, ...values.map(v=>Math.abs(v.y)));
   let yaw=-.55, pitch=.34, zoom=1, active=null, positions=[];
+  let featureFilter="all", protocolFilter="all", showDispersion=false;
+  const featureSelect=root.querySelector("[data-feature-filter]");
+  const protocolSelect=root.querySelector("[data-protocol-filter]");
+  const dispersionInput=root.querySelector("[data-show-dispersion]");
+  const visible=v=>(featureFilter==="all"||v.name===featureFilter)&&
+                    (protocolFilter==="all"||v.protocol===protocolFilter);
   const w=canvas.width,h=canvas.height;
   const project=(x,y,z)=>{
     const a=(x-5)*64, b=y/bound*145, c=(z-1)*145;
@@ -43,10 +49,15 @@ const initialize = (root) => {
     }
     for(let x=0;x<11;x++){line(project(x,0,0),project(x,0,2),"#d5e4e1");}
     line(project(0,0,0),project(0,0,2),"#53968e",2);
-    positions=values.map((v,i)=>({index:i,point:project(v.x,v.y,v.z),base:project(v.x,0,v.z),value:v}));
+    positions=values.map((v,i)=>({index:i,point:project(v.x,v.y,v.z),base:project(v.x,0,v.z),value:v})).filter(item=>visible(item.value));
     positions.sort((a,b)=>b.point[2]-a.point[2]);
     for(const item of positions){
       const isSelected=active===item.index;
+      if(showDispersion&&item.value.dispersion>0){
+        const low=project(item.value.x,item.value.y-item.value.dispersion,item.value.z);
+        const high=project(item.value.x,item.value.y+item.value.dispersion,item.value.z);
+        line(low,high,"#9871a8",2.5);
+      }
       line(item.base,item.point,item.value.y<0?"#b36e57":"#499b8d",isSelected?3:1.5);
       ctx.fillStyle=item.value.y<0?"#c0745b":"#247e73";
       ctx.beginPath();ctx.arc(item.point[0],item.point[1],isSelected?8:5,0,Math.PI*2);ctx.fill();
@@ -68,6 +79,17 @@ const initialize = (root) => {
       draw();
     }
   };
+  const filterUpdate=()=>{
+    featureFilter=featureSelect?.value||"all";
+    protocolFilter=protocolSelect?.value||"all";
+    showDispersion=Boolean(dispersionInput?.checked);
+    active=null;
+    detail.textContent="Exibindo "+values.filter(visible).length+" de 33 medições. Desvio não é intervalo de confiança.";
+    draw();
+  };
+  featureSelect?.addEventListener("change",filterUpdate);
+  protocolSelect?.addEventListener("change",filterUpdate);
+  dispersionInput?.addEventListener("change",filterUpdate);
   let drag=null;
   canvas.addEventListener("pointerdown",e=>{drag={x:e.clientX,y:e.clientY,moved:false};canvas.setPointerCapture(e.pointerId);});
   canvas.addEventListener("pointermove",e=>{
@@ -90,7 +112,7 @@ const initialize = (root) => {
   });
   root.querySelectorAll("[data-rotate]").forEach(btn=>btn.addEventListener("click",()=>{yaw+=Number(btn.dataset.rotate)*.18;draw();}));
   root.querySelectorAll("[data-zoom]").forEach(btn=>btn.addEventListener("click",()=>{zoom=Math.max(.5,Math.min(2,zoom+Number(btn.dataset.zoom)*.12));draw();}));
-  root.querySelector("[data-reset]")?.addEventListener("click",()=>{yaw=-.55;pitch=.34;zoom=1;active=null;draw();});
+  root.querySelector("[data-reset]")?.addEventListener("click",()=>{yaw=-.55;pitch=.34;zoom=1;active=null;if(featureSelect)featureSelect.value="all";if(protocolSelect)protocolSelect.value="all";if(dispersionInput)dispersionInput.checked=false;filterUpdate();});
   draw();
 };
 const boot=()=>document.querySelectorAll("[data-lupa-scene]").forEach(initialize);
