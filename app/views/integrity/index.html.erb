@@ -4,3 +4,15 @@
 <div class="panel"><div class="panel-heading"><div><div class="eyebrow">CONTROLES</div><h3>Matriz de implementação</h3></div></div>
 <div class="integrity-list"><% @checks.each do |title,description,status| %><div class="integrity-item"><span class="integrity-icon">⬡</span><div><strong><%= title %></strong><small><%= description %></small></div><span class="subtle-pill <%= status == 'Planejado' ? 'pill-muted' : '' %>"><%= status %></span></div><% end %></div></div>
 <div class="panel slim-panel"><strong>Política científica:</strong> resultados com evidências insuficientes não devem ser publicados. A implementação atual do Sentinel verifica dependências temporais <em>declaradas</em>; o Ledger registra uma cadeia local de hashes, ainda sem assinatura externa.</div>
+
+<section class="panel"><div class="panel-heading"><div><div class="eyebrow">LEDGER · SENTINEL / INSPEÇÃO LOCAL</div><h3>Auditoria dos experimentos recentes</h3></div><span class="subtle-pill">SOMENTE LEITURA</span></div>
+<p class="muted">Confere os digests SHA-256 do JSON persistido e a consistência de schema, classificação sintética, seed e manifesto; não afirma atestação criptográfica externa nem segurança completa contra vazamento temporal.</p>
+<% if @audits.empty? %><p class="muted">Nenhum experimento MAPA concluído disponível para auditoria.</p><% else %>
+<div class="table-wrap"><table class="runs-table"><thead><tr><th>Execução</th><th>Válidos</th><th>Inválidos</th><th>Ausentes</th><th>Detalhes</th></tr></thead><tbody>
+<% @audits.each do |audit| %>
+<tr><td><%= link_to "##{audit[:run_id]}", mapa_run_path(audit[:run_id]), class: "text-link" %></td>
+<td><%= audit[:verified] %></td><td><%= audit[:invalid] %></td><td><%= audit[:absent] %></td><td><details><summary>Inspecionar artefatos</summary><ul>
+<% audit[:artifacts].each do |artifact| %><li><strong><%= artifact[:name] %></strong>: <%= artifact[:status] %> <%= artifact[:reasons].join(" ") %></li><% end %>
+</ul></details></td></tr>
+<% end %></tbody></table></div>
+<% end %></section>
