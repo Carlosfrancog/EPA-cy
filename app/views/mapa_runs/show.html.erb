@@ -38,6 +38,30 @@
       <% end %>
     </section>
   <% end %>
+  <% if @run.research_report && @run.research_extended_report %>
+    <section class="panel">
+      <div class="eyebrow">MAPA · COMPARAÇÃO CIENTÍFICA PAREADA</div>
+      <h3>Diferença de F1 macro por fold</h3>
+      <p class="muted">Referência: Majority. Mesmos folds, mesma seed e mesmo conjunto sintético, com verificação do suporte por classe.</p>
+      <% %w[early trajectory consolidated].each_with_index do |protocol_name, protocol_index| %>
+        <% comparison = MapaPairedComparison.build(@run, protocol: protocol_name) %>
+        <h4>N<%= protocol_index + 1 %> · <%= protocol_name.humanize %></h4>
+        <% if comparison[:status] == "descriptive" %>
+          <div class="table-wrap"><table class="runs-table"><thead><tr><th>Modelo</th><th>Δ F1 médio</th><th>Faixa Δ F1</th><th>Ganhou / Empatou / Perdeu</th><th>Folds</th></tr></thead><tbody>
+          <% comparison[:rows].each do |row| %>
+            <tr><td><%= row[:model].humanize %></td>
+              <td><%= number_with_precision(row[:mean_f1_delta], precision: 4) %></td>
+              <td><%= number_with_precision(row[:min_f1_delta], precision: 4) %> a <%= number_with_precision(row[:max_f1_delta], precision: 4) %></td>
+              <td><%= row[:wins] %> / <%= row[:ties] %> / <%= row[:losses] %></td>
+              <td><%= row[:paired_folds] %></td></tr>
+          <% end %></tbody></table></div>
+          <p class="muted"><%= comparison[:caveat] %></p>
+        <% else %>
+          <p class="muted">Comparação indisponível: <%= comparison[:reason] %>.</p>
+        <% end %>
+      <% end %>
+    </section>
+  <% end %>
   <% if (research_ext = @run.research_extended_report) %>
     <section class="panel"><div class="eyebrow">MAPA · CIÊNCIA DOS MODELOS ESTENDIDOS</div>
       <h3>Validação cruzada de MLP / XGBoost</h3>
