@@ -17,6 +17,35 @@
   <% end %>
 </section>
 <% if @row %>
+  <% if @scene %>
+    <section class="panel">
+      <div class="panel-heading"><div><div class="eyebrow">LUPA · ESPAÇO DE SENSIBILIDADE</div><h3>Observatório 3D · N1 / N2 / N3</h3></div><span class="subtle-pill">33 MEDIÇÕES</span></div>
+      <p class="muted">X = variável, Y = queda assinada de F1 macro por permutação, Z = protocolo. A perspectiva é geométrica; não significa relação causal ou distância estatística entre protocolos.</p>
+      <div class="lupa-scene" data-lupa-scene>
+        <script type="application/json" data-scene-json><%= raw json_escape(@scene.to_json) %></script>
+        <canvas width="1050" height="530" tabindex="0" role="img" aria-label="Visualização 3D de onze variáveis em três protocolos, com importância positiva ou negativa. Use setas para girar, mais e menos para ampliar. Os dados também aparecem na tabela acessível abaixo."></canvas>
+        <div class="lupa-scene-controls">
+          <button type="button" data-rotate="-1" class="button button-outline">Girar esquerda</button>
+          <button type="button" data-rotate="1" class="button button-outline">Girar direita</button>
+          <button type="button" data-zoom="1" class="button button-outline">Ampliar</button>
+          <button type="button" data-zoom="-1" class="button button-outline">Reduzir</button>
+          <button type="button" data-reset class="button button-outline">Restaurar</button>
+        </div>
+        <p class="muted" aria-live="polite" data-scene-detail>Selecione um ponto no gráfico para visualizar o valor medido.</p>
+      </div>
+      <details><summary>Tabela acessível das 33 medições</summary>
+        <div class="table-wrap"><table class="runs-table"><thead><tr><th>Protocolo</th><th>Variável</th><th>Queda F1</th><th>Desvio</th></tr></thead><tbody>
+          <% @scene[:protocols].each do |protocol| %>
+            <% protocol[:features].each do |feature| %>
+              <tr><td><%= protocol[:protocol] %></td><td><%= feature[:name] %></td>
+                <td><%= number_with_precision(feature[:importance], precision: 4) %></td>
+                <td><%= number_with_precision(feature[:dispersion], precision: 4) %></td></tr>
+            <% end %>
+          <% end %>
+        </tbody></table></div>
+      </details>
+    </section>
+  <% end %>
   <section class="panel">
     <div class="panel-heading"><div><div class="eyebrow">PERMUTATION IMPORTANCE · HOLDOUT POR ALUNO</div><h3>Queda do F1 macro por variável</h3></div><span class="subtle-pill">RANDOM FOREST</span></div>
     <div class="stats-grid">
