@@ -23,6 +23,23 @@
       <p class="muted">X = variável, Y = queda assinada de F1 macro por permutação, Z = protocolo. A perspectiva é geométrica; não significa relação causal ou distância estatística entre protocolos.</p>
       <div class="lupa-scene" data-lupa-scene>
         <script type="application/json" data-scene-json><%= raw json_escape(@scene.to_json) %></script>
+        <div class="lupa-scene-filters">
+          <label for="lupa-feature-select">Variável</label>
+          <select id="lupa-feature-select" data-feature-filter class="input">
+            <option value="all">Todas as variáveis</option>
+            <% @scene[:protocols].first[:features].each do |feature| %>
+              <option value="<%= feature[:name] %>"><%= feature[:name] %></option>
+            <% end %>
+          </select>
+          <label for="lupa-protocol-select">Protocolo</label>
+          <select id="lupa-protocol-select" data-protocol-filter class="input">
+            <option value="all">N1 + N2 + N3</option>
+            <option value="early">N1</option>
+            <option value="trajectory">N2</option>
+            <option value="consolidated">N3</option>
+          </select>
+          <label><input type="checkbox" data-show-dispersion> ±1 desvio de permutação</label>
+        </div>
         <canvas width="1050" height="530" tabindex="0" role="img" aria-label="Visualização 3D de onze variáveis em três protocolos, com importância positiva ou negativa. Use setas para girar, mais e menos para ampliar. Os dados também aparecem na tabela acessível abaixo."></canvas>
         <div class="lupa-scene-controls">
           <button type="button" data-rotate="-1" class="button button-outline">Girar esquerda</button>
