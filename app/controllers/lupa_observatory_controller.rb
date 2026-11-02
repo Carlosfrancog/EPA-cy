@@ -7,5 +7,6 @@ class LupaObservatoryController < ApplicationController
       protocol: @protocol
     )
     @row = @observatory[:rows].find { |r| r[:run_id] == @selected_run } || @observatory[:rows].first
+    @scene = LupaScene.for_run(MapaRun.find_by(id: @row[:run_id])) if @row
   end
 end
