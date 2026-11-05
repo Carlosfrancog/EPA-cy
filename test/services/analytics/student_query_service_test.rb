@@ -51,3 +51,4 @@ class StudentQueryServiceTest < ActiveSupport::TestCase
       @service.call(student_id: "SYN00000001", dataset_version: @version)
     end
   end
+end
