@@ -24,9 +24,10 @@ module Analytics
     DATASET_SCHEMA = "epa.genesis.dataset.v3"
 
     def initialize(dataset_root: Rails.root.join("data", "datasets"),
-                   duckdb_binary: ENV.fetch("EPA_DUCKDB_CLI", "duckdb"))
+                   duckdb_binary: ENV.fetch("EPA_DUCKDB_CLI", "duckdb"), command_runner: Open3)
       @dataset_root = Pathname.new(dataset_root)
       @duckdb_binary = duckdb_binary
+      @command_runner = command_runner
     end
 
     def call(student_id:, dataset_version:)
@@ -56,7 +57,7 @@ module Analytics
       SQL
 
       stdout, stderr, status = Timeout.timeout(TIMEOUT_SECONDS) do
-        Open3.capture3(@duckdb_binary, "-json", "-c", sql)
+        @command_runner.capture3(@duckdb_binary, "-json", "-c", sql)
       end
       raise QueryFailed, "duckdb returned non-zero exit status" unless status.success?
       raise QueryFailed, "duckdb stdout too large" if stdout.bytesize > OUTPUT_LIMIT
