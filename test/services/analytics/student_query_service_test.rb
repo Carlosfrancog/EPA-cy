@@ -1,5 +1,4 @@
 require "test_helper"
-require "minitest/mock"
 require "tmpdir"
 require "fileutils"
 
@@ -28,13 +27,18 @@ class StudentQueryServiceTest < ActiveSupport::TestCase
                   "average_grade" => 6.5, "attendance_rate" => 0.95 }].to_json
     status = Struct.new(:success?).new(true)
     called = nil
-    Open3.stub(:capture3, ->(*args) { called = args; [response, "", status] }) do
-      output = @service.call(student_id: "SYN00000001", dataset_version: @version)
-      assert_equal 6.5, output["average_grade"]
-      assert_equal "SYNTHETIC", output["data_classification"]
-      assert_match(/\ASET memory_limit/, called.last)
-      assert_equal ["duckdb", "-json", "-c"], called.first(3)
+    runner = Object.new
+    runner.define_singleton_method(:capture3) do |*args|
+      called = args
+      [response, "", status]
     end
+    service = Analytics::StudentQueryService.new(dataset_root: @root,
+                                                 duckdb_binary: "duckdb", command_runner: runner)
+    output = service.call(student_id: "SYN00000001", dataset_version: @version)
+    assert_equal 6.5, output["average_grade"]
+    assert_equal "SYNTHETIC", output["data_classification"]
+    assert_match(/\ASET memory_limit/, called.last)
+    assert_equal ["duckdb", "-json", "-c"], called.first(3)
   end
 
   test "rejects traversal before starting duckdb" do
