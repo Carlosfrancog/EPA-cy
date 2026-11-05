@@ -1,0 +1,29 @@
+name: GENESIS v3 streaming validation
+on:
+  pull_request:
+    paths:
+      - 'epa/genesis/v3.py'
+      - 'epa/sentinel/temporal_gate.py'
+      - 'tests/test_genesis_v3.py'
+      - 'tests/test_sentinel_temporal_gate.py'
+      - 'pyproject.toml'
+      - '.github/workflows/genesis-v3.yml'
+  push:
+    branches: [develop]
+    paths:
+      - 'epa/genesis/v3.py'
+      - 'epa/sentinel/temporal_gate.py'
+      - 'tests/test_genesis_v3.py'
+      - 'tests/test_sentinel_temporal_gate.py'
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install -e '.[dev,research,streaming]'
+      - run: python -m pytest -q tests/test_genesis_v3.py tests/test_sentinel_temporal_gate.py
