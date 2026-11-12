@@ -5,6 +5,9 @@ on:
     paths:
       - 'engines/genesis-rs/**'
       - 'tools/check_genesis_rust_stream.py'
+      - 'tools/benchmark_genesis.py'
+      - 'tests/test_benchmark_genesis.py'
+      - 'pyproject.toml'
       - 'tools/compare_genesis_parquet.py'
       - 'epa/genesis/rust_bridge.py'
       - 'tools/compare_genesis_parquet.py'
@@ -44,8 +47,8 @@ jobs:
         env:
           PYTHONPATH: .
         run: python tools/check_genesis_rust_stream.py --students 3 --seed 20261029
-      - name: Install PyArrow and DuckDB for Parquet equivalence
-        run: python -m pip install -e ".[research,streaming]"
+      - name: Install Parquet and benchmark tools
+        run: python -m pip install -e ".[dev,research,streaming,benchmark]"
       - name: Create Python GENESIS v3 small reference
         run: python -m epa.genesis.v3 --output data/ci-genesis-py3 --students 3 --seed 20261029
       - name: Persist Rust records as Parquet via bridge
@@ -63,3 +66,7 @@ jobs:
             echo "ERROR: immutable output was overwritten"
             exit 1
           fi
+      - name: Verify benchmark statistics
+        run: python -m pytest -q tests/test_benchmark_genesis.py
+      - name: Verify small benchmark end to end
+        run: python tools/benchmark_genesis.py --students 1 --warmups 0 --repeats 1 --engines python_v3_pyarrow rust_native_parquet --sample-ms 5 --output-root data/ci-genesis-bench
