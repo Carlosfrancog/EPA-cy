@@ -17,3 +17,6 @@ mlruns/
 
 # Rust build outputs (Cargo.lock remains versionable)
 **/target/
+
+# Python editable-install / packaging metadata
+*.egg-info/
