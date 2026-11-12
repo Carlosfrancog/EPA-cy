@@ -1,7 +1,7 @@
 //! Native Rust Parquet output via ArrowWriter. Bounded row-group buffering.
-//! Existing records::generate emits JSON fragments into this in-process adapter:
-//! no Python, subprocess, or external JSONL file is involved.
-//! A later optimization can replace JSON decoding with typed callbacks.
+//! Structured logical rows are sent directly to Arrow buffers (no JSONL serialization
+//! or parsing). The records still use serde_json::Value internally; dedicated
+//! typed structs and Arrow builders are a separate future optimization.
 use crate::{load_catalog, records};
 use arrow_array::{ArrayRef, Float64Array, Int32Array, RecordBatch, StringArray};
 use arrow_schema::{DataType, Field, Schema};
@@ -9,7 +9,7 @@ use parquet::arrow::ArrowWriter;
 use serde_json::{json, Value};
 use sha2::{Digest, Sha256};
 use std::{
-    collections::BTreeMap, fs::{self, File}, io::{self, Read, Write},
+    collections::BTreeMap, fs::{self, File}, io::Read,
     path::{Path, PathBuf}, sync::Arc, time::{SystemTime, UNIX_EPOCH},
 };
 
@@ -110,9 +110,7 @@ impl ParquetEntity {
     }
 }
 struct Sink {
-    line: Vec<u8>,
     entities: BTreeMap<String, ParquetEntity>,
-    failed: Option<String>,
 }
 impl Sink {
     fn new(stage: &Path, limit: usize) -> Result<Self, String> {
@@ -120,41 +118,20 @@ impl Sink {
         for name in ENTITIES {
             entities.insert(name.to_string(), ParquetEntity::new(stage, name, limit)?);
         }
-        Ok(Self { line: Vec::with_capacity(1024), entities, failed: None })
+        Ok(Self { entities })
     }
-    fn consume(&mut self) -> Result<(), String> {
-        let record: Value = serde_json::from_slice(&self.line).map_err(|e| e.to_string())?;
-        let entity = record.get("entity").and_then(Value::as_str).ok_or("missing entity")?;
-        let row = record.get("row").ok_or("missing row")?.clone();
-        self.entities.get_mut(entity).ok_or_else(|| format!("unknown entity: {entity}"))?.push(entity, row)?;
-        self.line.clear();
-        Ok(())
+    fn emit(&mut self, entity: &str, row: Value) -> Result<(), String> {
+        self.entities.get_mut(entity)
+            .ok_or_else(|| format!("unknown entity: {entity}"))?
+            .push(entity, row)
     }
     fn close(self) -> Result<BTreeMap<String, usize>, String> {
-        if let Some(err) = self.failed { return Err(err); }
-        if !self.line.is_empty() { return Err("incomplete JSON line".into()); }
         let mut counts = BTreeMap::new();
-        for (name, writer) in self.entities { counts.insert(name, writer.close()?); }
+        for (name, writer) in self.entities {
+            counts.insert(name, writer.close()?);
+        }
         Ok(counts)
     }
-}
-impl Write for Sink {
-    fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
-        if let Some(err) = &self.failed { return Err(io::Error::other(err.clone())); }
-        for byte in buf {
-            if *byte == b'\n' {
-                if let Err(err) = self.consume() {
-                    self.failed = Some(err.clone());
-                    return Err(io::Error::other(err));
-                }
-            } else {
-                if self.line.len() >= 1_048_576 { return Err(io::Error::other("row larger than 1MiB")); }
-                self.line.push(*byte);
-            }
-        }
-        Ok(buf.len())
-    }
-    fn flush(&mut self) -> io::Result<()> { Ok(()) }
 }
 fn hash_file(path: &Path) -> Result<String, String> {
     let mut file = File::open(path).map_err(|e| e.to_string())?;
@@ -190,7 +167,7 @@ pub fn generate(
     fs::create_dir(&stage).map_err(|e| e.to_string())?;
     let result = (|| {
         let mut sink = Sink::new(&stage, row_group_rows)?;
-        records::generate(&mut sink, &catalog, cfg)?;
+        records::generate_rows(&catalog, cfg, |entity, row| sink.emit(entity, row))?;
         let counts = sink.close()?;
         let subjects: usize = catalog.grades.iter().map(|g| g.subjects.len()).sum();
         let years = catalog.grades.len();
