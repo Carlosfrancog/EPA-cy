@@ -1,5 +1,7 @@
 //! GENESIS Rust (stage 1): ATLAS validation and Python-compatible stable seeds.
 //! No synthetic grades or Parquet output in this stage.
+mod rng;
+
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use std::{collections::HashSet, env, fs, path::Path, process};
@@ -39,6 +41,7 @@ struct Inspection {
     subject_offerings: u64,
     period_records: u64,
     terms_per_year: u64,
+    first_student_id: String,
     note: &'static str,
 }
 fn hex_sha256(bytes: &[u8]) -> String {
@@ -110,6 +113,7 @@ fn inspect(path: &Path, students: u64, seed: u64) -> Result<Inspection, String> 
         subject_offerings: subject_total * 2 * 3,
         period_records: students * subject_total * 4,
         terms_per_year: 4,
+        first_student_id: student_id(1),
         note: "Inspection only; no records generated or trained",
     })
 }
@@ -122,6 +126,19 @@ fn run() -> Result<(), String> {
         Some("seed") if args.len() >= 2 => {
             let parts: Vec<&str> = args[1..].iter().map(String::as_str).collect();
             println!("{}", stable_seed(&parts));
+            Ok(())
+        }
+        Some("rng-probe") if args.len() == 2 => {
+            let seed = args[1].parse::<u64>().map_err(|e| format!("rng seed: {e}"))?;
+            let mut rng = rng::PythonRandom::seeded(seed);
+            let result = serde_json::json!({
+                "seed": seed,
+                "first_random": rng.random(),
+                "next_uniform_minus_1_to_1": rng.uniform(-1.0, 1.0),
+                "next_gauss_standard": rng.gauss(0.0, 1.0),
+                "next_randint_16_to_25": rng.randint(16, 25),
+            });
+            println!("{}", serde_json::to_string_pretty(&result).map_err(|e| e.to_string())?);
             Ok(())
         }
         Some("inspect") if args.len() == 4 => {

@@ -1,0 +1,33 @@
+name: GENESIS Rust parity
+
+on:
+  pull_request:
+    paths:
+      - 'engines/genesis-rs/**'
+      - '.github/workflows/genesis-rust-parity.yml'
+  push:
+    branches: [develop]
+    paths:
+      - 'engines/genesis-rs/**'
+      - '.github/workflows/genesis-rust-parity.yml'
+
+jobs:
+  rust-parity:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Rust compiler
+        run: rustc --version
+      - name: Run golden-vector tests
+        run: cargo test --manifest-path engines/genesis-rs/Cargo.toml
+      - name: Inspect synthetic ATLAS demo
+        run: cargo run --release --manifest-path engines/genesis-rs/Cargo.toml -- inspect examples/atlas.demo.json 120 20261029
+      - name: Verify SHA256 seed
+        shell: bash
+        run: |
+          actual=$(cargo run --quiet --release --manifest-path engines/genesis-rs/Cargo.toml -- seed 20261029 SYN00000001 profile)
+          test "$actual" = "3051383292237719500"
