@@ -70,51 +70,86 @@ def _aggregate(records: list[dict]) -> dict:
 
 
 def build_snapshots(data: dict[str, list[dict]], *, cutoff: int) -> list[dict]:
-    """Create one snapshot per enrollment/subject for a known term cutoff (1,2,3).
+    """Build point-in-time academic snapshots with one pass over student history.
 
-    History is restricted to the SAME subject in earlier academic years.
-    Current-year observations include terms 1..cutoff only.
-    No current year term 4 is included in a feature.
+    Records are indexed by student/subject and enrollment/subject once.
+    A chronological accumulator avoids repeatedly scanning previous years
+    for every new subject/year snapshot. Its features contain strictly
+    preceding years; the final outcome is stored only as a training label.
     """
     if cutoff not in (1, 2, 3):
         raise ValueError("cutoff must be 1, 2 or 3")
-    by_student_subject: dict[tuple[str, str], list[dict]] = defaultdict(list)
-    by_enrollment_subject: dict[tuple[str, str], list[dict]] = defaultdict(list)
+
+    grouped: dict[tuple[str, str], dict[str, list[dict]]] = defaultdict(
+        lambda: defaultdict(list)
+    )
     for row in data["period_records"]:
-        by_student_subject[(row["student_id"], row["subject_id"])].append(row)
-        by_enrollment_subject[(row["enrollment_id"], row["subject_id"])].append(row)
+        grouped[(row["student_id"], row["subject_id"])][row["enrollment_id"]].append(row)
 
     output = []
-    for (enrollment_id, subject_id), current in sorted(by_enrollment_subject.items()):
-        current.sort(key=lambda r: r["term"])
-        reference = current[0]
-        student_id = reference["student_id"]
-        year = reference["academic_year"]
-        eligible = [r for r in by_student_subject[(student_id, subject_id)]
-                    if r["academic_year"] < year]
-        available = [r for r in current if r["term"] <= cutoff]
-        if len(available) != cutoff:
-            raise ValueError("incomplete current cutoff")
-        current_metrics = _aggregate(available)
-        previous_metrics = _aggregate(eligible) if eligible else None
+    for (student_id, subject_id), enrollments in grouped.items():
+        # History is accumulated in calendar order, independent of how
+        # enrollment records happen to be ordered in the input.
+        ordered = sorted(
+            enrollments.items(), key=lambda item: item[1][0]["academic_year"]
+        )
+        prior_grade_sum = 0.0
+        prior_terms = 0
+        prior_sessions = prior_present = prior_absences = 0
+        prior_excused = prior_unexcused = 0
+        prior_years: set[int] = set()
 
-        # The label is strictly separate; training code must never place it in X.
-        # Thresholds are SYNTHETIC illustrative policy, not school/BNCC policy.
-        final_mean = sum(r["assessment_grade"] for r in current) / len(current)
-        target = ("approved" if final_mean >= 6.0
-                  else "recovery" if final_mean >= 4.0 else "failed")
-        output.append({
-            "student_id": student_id, "enrollment_id": enrollment_id,
-            "class_id": reference["class_id"], "academic_year": year,
-            "grade_level": reference["grade_level"], "subject_id": subject_id,
-            "cutoff_term": cutoff, "known_term_count": len(available),
-            "current": current_metrics,
-            "prior_same_subject": previous_metrics,
-            "prior_years_observed": len({r["academic_year"] for r in eligible}),
-            "target_final_subject_outcome": target,
-            "target_usage": "LABEL_ONLY_NOT_FEATURE",
-            "data_classification": "SYNTHETIC",
-        })
+        for enrollment_id, current in ordered:
+            current.sort(key=lambda row: row["term"])
+            reference = current[0]
+            year = reference["academic_year"]
+            available = [row for row in current if row["term"] <= cutoff]
+            if len(available) != cutoff:
+                raise ValueError("incomplete current cutoff")
+            current_metrics = _aggregate(available)
+            previous_metrics = None
+            if prior_terms:
+                previous_metrics = {
+                    "term_count": prior_terms,
+                    "mean_grade": round(prior_grade_sum / prior_terms, 6),
+                    "scheduled_sessions": prior_sessions,
+                    "present_sessions": prior_present,
+                    "absences_total": prior_absences,
+                    "absences_excused": prior_excused,
+                    "absences_unexcused": prior_unexcused,
+                    "attendance_rate": round(prior_present / prior_sessions, 6),
+                }
+
+            final_mean = sum(row["assessment_grade"] for row in current) / len(current)
+            target = ("approved" if final_mean >= 6.0
+                      else "recovery" if final_mean >= 4.0 else "failed")
+            output.append({
+                "student_id": student_id, "enrollment_id": enrollment_id,
+                "class_id": reference["class_id"], "academic_year": year,
+                "grade_level": reference["grade_level"], "subject_id": subject_id,
+                "cutoff_term": cutoff, "known_term_count": len(available),
+                "current": current_metrics,
+                "prior_same_subject": previous_metrics,
+                "prior_years_observed": len(prior_years),
+                "target_final_subject_outcome": target,
+                "target_usage": "LABEL_ONLY_NOT_FEATURE",
+                "data_classification": "SYNTHETIC",
+            })
+
+            # Only after creating this year's snapshot do we advance the
+            # historical accumulator. This is the point-in-time safety gate.
+            prior_years.add(year)
+            for record in current:
+                prior_grade_sum += record["assessment_grade"]
+                prior_terms += 1
+                prior_sessions += record["scheduled_sessions"]
+                prior_present += record["present_sessions"]
+                prior_absences += record["absences_total"]
+                prior_excused += record["absences_excused"]
+                prior_unexcused += record["absences_unexcused"]
+
+    # Retain historical API order for reproducible downstream model inputs.
+    output.sort(key=lambda item: (item["enrollment_id"], item["subject_id"]))
     return output
 
 
