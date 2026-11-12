@@ -55,8 +55,8 @@
       <% 3.times do |tree| %><g transform="translate(<%= 125 + tree * 245 %>,15)" stroke="#4d9a8d" stroke-width="2">
         <path d="M0 30 L-55 90 M0 30 L55 90 M-55 90 L-82 150 M-55 90 L-28 150 M55 90 L28 150 M55 90 L82 150" fill="none"/>
         <% [[0,30],[-55,90],[55,90],[-82,150],[-28,150],[28,150],[82,150]].each do |x,y| %>
-          <circle cx="<%= x %>" cy="<%= y %>" r="11" fill="#e4f5ed"/></g><g transform="translate(<%= 125 + tree * 245 %>,15)"></g><% end %>
-        <text x="<%= 125 + tree * 245 %>" y="200" text-anchor="middle" fill="#406b67">Árvore <%= tree + 1 %> (esquema)</text>
+          <circle cx="<%= x %>" cy="<%= y %>" r="11" fill="#e4f5ed"/><% end %>
+        </g><text x="<%= 125 + tree * 245 %>" y="200" text-anchor="middle" fill="#406b67">Árvore <%= tree + 1 %> (esquema)</text>
       <% end %>
     </svg></section>
   <% end %>
