@@ -44,7 +44,8 @@ fn bounded(value: f64, lo: f64, hi: f64) -> f64 {
     value.max(lo).min(hi)
 }
 fn write_row<W: Write>(writer: &mut W, entity: &str, row: Value) -> io::Result<()> {
-    serde_json::to_writer(&mut *writer, &json!({"entity": entity, "row": row}))?;
+    serde_json::to_writer(&mut *writer, &json!({"entity": entity, "row": row}))
+        .map_err(io::Error::other)?;
     writer.write_all(b"\n")
 }
 
