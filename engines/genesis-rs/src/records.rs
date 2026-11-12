@@ -49,7 +49,12 @@ fn write_row<W: Write>(writer: &mut W, entity: &str, row: Value) -> io::Result<(
     writer.write_all(b"\n")
 }
 
-pub fn generate<W: Write>(writer: &mut W, catalog: &Catalog, cfg: Config) -> Result<(), String> {
+/// Emit logical rows without serializing/deserializing JSON inside the native writer.
+/// The callback receives a structured Value until the typed Arrow refactor.
+pub fn generate_rows<F>(catalog: &Catalog, cfg: Config, mut emit: F) -> Result<(), String>
+where
+    F: FnMut(&str, Value) -> Result<(), String>,
+{
     cfg.validate()?;
     let mut grades: Vec<_> = catalog.grades.iter().collect();
     grades.sort_by_key(|grade| grade.grade_level);
@@ -60,19 +65,19 @@ pub fn generate<W: Write>(writer: &mut W, catalog: &Catalog, cfg: Config) -> Res
         for school in 1..=cfg.school_count {
             for section in 1..=cfg.classes_per_grade {
                 let class_id = format!("C{year}-{}-S{school:02}-T{section:02}", grade.grade_level);
-                write_row(writer, "classes", json!({
+                emit("classes", json!({
                     "class_id": class_id,
                     "school_id": format!("SCHOOL{school:03}"),
                     "academic_year": year,
                     "grade_level": grade.grade_level,
-                })).map_err(|e| e.to_string())?;
+                }))?;
                 for subject in &grade.subjects {
-                    write_row(writer, "subject_offerings", json!({
+                    emit("subject_offerings", json!({
                         "offering_id": format!("{class_id}-{}", subject.id),
                         "class_id": class_id,
                         "subject_id": subject.id,
                         "knowledge_area": subject.area,
-                    })).map_err(|e| e.to_string())?;
+                    }))?;
                 }
             }
         }
@@ -81,9 +86,9 @@ pub fn generate<W: Write>(writer: &mut W, catalog: &Catalog, cfg: Config) -> Res
     let seed_text = cfg.seed.to_string();
     for number in 1..=cfg.students {
         let student = student_id(number);
-        write_row(writer, "students", json!({
+        emit("students", json!({
             "student_id": student, "data_classification": "SYNTHETIC"
-        })).map_err(|e| e.to_string())?;
+        }))?;
 
         let profile_seed = stable_seed(&[seed_text.as_str(), student.as_str(), "profile"]);
         let mut profile_rng = PythonRandom::seeded(profile_seed);
@@ -103,11 +108,11 @@ pub fn generate<W: Write>(writer: &mut W, catalog: &Catalog, cfg: Config) -> Res
             let section = 1 + (section_seed % cfg.classes_per_grade as u64);
             let class_id = format!("C{year}-{}-S{school:02}-T{section:02}", grade.grade_level);
             let enrollment_id = format!("{student}-{year}");
-            write_row(writer, "enrollments", json!({
+            emit("enrollments", json!({
                 "enrollment_id": enrollment_id, "student_id": student,
                 "class_id": class_id, "academic_year": year,
                 "grade_level": grade.grade_level, "status": "ENROLLED"
-            })).map_err(|e| e.to_string())?;
+            }))?;
 
             for subject in &grade.subjects {
                 let subject_seed = stable_seed(&[seed_text.as_str(), student.as_str(), subject.id.as_str(), "longitudinal"]);
@@ -140,7 +145,7 @@ pub fn generate<W: Write>(writer: &mut W, catalog: &Catalog, cfg: Config) -> Res
                     for _ in 0..absences {
                         if rng.random() < 0.23 { excused += 1; }
                     }
-                    write_row(writer, "period_records", json!({
+                    emit("period_records", json!({
                         "enrollment_id": enrollment_id, "student_id": student,
                         "class_id": class_id, "academic_year": year,
                         "grade_level": grade.grade_level, "subject_id": subject.id,
@@ -150,12 +155,19 @@ pub fn generate<W: Write>(writer: &mut W, catalog: &Catalog, cfg: Config) -> Res
                         "absences_excused": excused, "absences_unexcused": absences - excused,
                         "attendance_rate": rounded(present as f64 / sessions as f64, 6),
                         "data_classification": "SYNTHETIC"
-                    })).map_err(|e| e.to_string())?;
+                    }))?;
                 }
             }
         }
     }
     Ok(())
+}
+
+
+pub fn generate<W: Write>(writer: &mut W, catalog: &Catalog, cfg: Config) -> Result<(), String> {
+    generate_rows(catalog, cfg, |entity, row| {
+        write_row(writer, entity, row).map_err(|error| error.to_string())
+    })
 }
 
 #[cfg(test)]
