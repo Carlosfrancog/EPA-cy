@@ -14,3 +14,6 @@ mlruns/
 *.db
 *.sqlite3
 !examples/*.json
+
+# Rust build outputs (Cargo.lock remains versionable)
+**/target/
