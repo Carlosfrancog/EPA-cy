@@ -1,0 +1,12 @@
+services:
+  research:
+    build:
+      context: .
+      dockerfile: Dockerfile.research
+    working_dir: /workspace
+    volumes:
+      - ./:/workspace
+    environment:
+      PYTHONUNBUFFERED: "1"
+    # No public ports: local experiment CLI only.
+    # Use `docker compose -f compose.research.yaml run --rm research ...`.
