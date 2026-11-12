@@ -6,6 +6,7 @@ Rails.application.routes.draw do
   get "/lupa", to: "lupa_observatory#index", as: :lupa_observatory
   get "/mapa/evaluation", to: "mapa_evaluations#index", as: :mapa_evaluation
   resources :mapa_runs, only: [:index, :show, :create], path: "mapa"
+  resources :native_mapa_runs, only: [:index, :show, :create], path: "mapa/native"
   get "/models", to: "models#index", as: :models
   get "/integrity", to: "integrity#index", as: :integrity
   get "/architecture", to: "architecture#index", as: :architecture
