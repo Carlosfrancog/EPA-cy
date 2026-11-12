@@ -204,4 +204,30 @@ mod tests {
             school_count: 2, classes_per_grade: 3 };
         assert!(invalid.validate().is_err());
     }
+    #[test]
+    fn callback_matches_legacy_jsonl_across_seeds() {
+        let (catalog, _) = load_catalog(Path::new("../../examples/atlas.demo.json"))
+            .or_else(|_| load_catalog(Path::new("examples/atlas.demo.json")))
+            .expect("demo catalog");
+        for seed in [1, 42, 20261029] {
+            let cfg = Config {
+                students: 3, seed, start_year: 2020,
+                school_count: 2, classes_per_grade: 3,
+            };
+            let mut jsonl = Vec::new();
+            generate(&mut jsonl, &catalog, cfg).expect("legacy JSONL");
+            let mut rows = Vec::new();
+            generate_rows(&catalog, cfg, |entity, row| {
+                rows.push(serde_json::json!({"entity": entity, "row": row}));
+                Ok(())
+            }).expect("direct callback");
+            let old: Vec<Value> = jsonl.split(|b| *b == b'\n')
+                .filter(|line| !line.is_empty())
+                .map(|line| serde_json::from_slice(line).unwrap())
+                .collect();
+            assert_eq!(old, rows, "seed={seed}");
+            assert_eq!(rows.len(), 42 + 324 + 3 * (1 + 7 + 216));
+        }
+    }
+
 }
