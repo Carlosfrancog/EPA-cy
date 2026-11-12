@@ -17,13 +17,13 @@ CATALOG = Path(__file__).resolve().parents[1] / "examples" / "atlas.demo.json"
 
 @pytest.fixture
 def features(tmp_path):
-    data = build_dataset(load_catalog(CATALOG), students=16, seed=11, start_year=2020)
+    data = build_dataset(load_catalog(CATALOG), students=40, seed=11, start_year=2020)
     source = tmp_path / "source"
     write_dataset(data, source, seed=11, catalog_digest="a" * 64)
     path = source / "manifest.json"
     manifest = json.loads(path.read_text())
     manifest.update(schema_version="epa.genesis.dataset.rust_native.v1",
-                    students=16, generator_seed=11)
+                    students=40, generator_seed=11)
     path.write_text(json.dumps(manifest))
     destination = tmp_path / "feature-data"
     export(source, destination)
@@ -58,14 +58,14 @@ def test_reliability_table_counts_observations_and_is_not_calibration_fit():
 
 
 def test_statistical_evaluator_reports_grouped_uncertainty_and_provenance(features):
-    report = run(features, max_students=12, seeds=(8,),
+    report = run(features, max_students=40, seeds=(8,),
                  algorithms=("majority", "logistic_regression"),
                  bootstrap_repetitions=50)
     assert report["schema_version"] == SCHEMA
-    assert report["selected_students"] == 12
+    assert report["selected_students"] == 40
     assert len(report["protocols"]) == 3
     for block in report["protocols"]:
-        assert block["train_students"] + block["test_students"] == 12
+        assert block["train_students"] + block["test_students"] == 40
         assert block["uncertainty"]["independent_clusters"] == block["test_students"]
         assert "majority__minus__logistic_regression" in block["uncertainty"]["paired_macro_f1_differences"]
         for result in block["results"]:
