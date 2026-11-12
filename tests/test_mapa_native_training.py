@@ -68,3 +68,19 @@ def test_scores_use_fixed_multiclass_order():
     assert s["brier_multiclass"] == 0
     with pytest.raises(ValueError, match="invalid predicted"):
         scores(truth, prediction, prob * 0.9)
+
+
+def test_log_loss_uses_correct_class_probability_order():
+    """Asymmetric probabilities expose the sklearn lexicographic ordering trap."""
+    truth = np.asarray(["approved", "failed", "recovery"])
+    predicted = truth.copy()
+    # MAPA order: approved, recovery, failed (NOT lexical order).
+    prob = np.asarray([
+        [0.90, 0.07, 0.03],
+        [0.02, 0.08, 0.90],
+        [0.04, 0.93, 0.03],
+    ])
+    result = scores(truth, predicted, prob)
+    expected = float(-np.mean(np.log([0.90, 0.90, 0.93])))
+    assert result["log_loss"] == pytest.approx(expected, abs=1e-12)
+    assert result["log_loss"] < 0.12
