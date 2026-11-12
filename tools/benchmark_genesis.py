@@ -19,7 +19,6 @@ import json
 import math
 import os
 import platform
-import shutil
 import statistics
 import subprocess
 import sys
@@ -38,7 +37,7 @@ except ImportError as exc:
 from tools.compare_genesis_parquet import ENTITIES, compare, sha256_file
 
 REPO = Path(__file__).resolve().parents[1]
-ENGINE_NAMES = ("python_v2_duckdb", "python_v3_pyarrow", "rust_pyarrow_bridge", "rust_native_parquet")
+ENGINE_NAMES = ("python_v3_pyarrow", "python_v2_duckdb", "rust_pyarrow_bridge", "rust_native_parquet")
 MANIFEST = "epa.benchmark.genesis.v1"
 
 
