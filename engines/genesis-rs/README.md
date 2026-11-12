@@ -29,3 +29,31 @@ O `rng-probe` consome uma única sequência contínua; seu segundo valor não é
 - A paridade lógica dos registros v2/v3 já foi testada separadamente; a paridade da futura geração Rust dependerá de novo teste de ponta a ponta.
 
 Os testes unitários executam automaticamente em Windows e Linux por GitHub Actions.
+
+## Etapa 3 — geração longitudinal em streaming (JSONL)
+
+O comando abaixo emite uma linha JSON por entidade/registro, sem acumular todo o conjunto em memória:
+
+```powershell
+cargo run --release --manifest-path engines/genesis-rs/Cargo.toml -- generate-jsonl examples/atlas.demo.json 3 20261029 > data/genesis-rs-3.jsonl
+```
+
+Esse arquivo **não é** Parquet nem um dataset de treinamento validado. Não reutilize diretórios ou artefatos das campanhas anteriores.
+
+Comparação direta com o gerador Python v3 (sem gravar arquivos):
+
+```powershell
+$env:PYTHONPATH = "."
+python tools/check_genesis_rust_stream.py --students 3 --seed 20261029
+python tools/check_genesis_rust_stream.py --students 10 --seed 42
+```
+
+O comparador confronta todos os registros, campos e tipos. Usa tolerância absoluta 1e-10 somente para valores `float`; campos inteiros/textuais são exatos. Se houver diferença de nota arredondada, frequência ou integridade, o comando falha. A etapa ainda **não tem métricas de performance comparáveis à v3**, pois JSONL e Parquet possuem custos de I/O distintos.
+
+Para validar o código novo:
+
+```powershell
+cargo test --locked --manifest-path engines/genesis-rs/Cargo.toml
+```
+
+A evolução da pesquisa, auditoria de SQL/consultas e entregáveis completos estão em `docs/research/engineering-evidence-plan-2026-11-12.md`.
