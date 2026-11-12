@@ -34,7 +34,10 @@ except ImportError as exc:
         'Install benchmark dependencies: python -m pip install -e ".[research,streaming,benchmark]"'
     ) from exc
 
-from tools.compare_genesis_parquet import ENTITIES, compare, sha256_file
+if __package__:
+    from .compare_genesis_parquet import ENTITIES, compare, sha256_file
+else:
+    from compare_genesis_parquet import ENTITIES, compare, sha256_file
 
 REPO = Path(__file__).resolve().parents[1]
 ENGINE_NAMES = ("python_v3_pyarrow", "python_v2_duckdb", "rust_pyarrow_bridge", "rust_native_parquet")
