@@ -7,6 +7,7 @@ on:
       - 'tools/check_genesis_rust_stream.py'
       - 'tools/compare_genesis_parquet.py'
       - 'epa/genesis/rust_bridge.py'
+      - 'tools/compare_genesis_parquet.py'
       - '.github/workflows/genesis-rust-parity.yml'
   push:
     branches: [develop]
@@ -51,3 +52,20 @@ jobs:
         run: python -m epa.genesis.rust_bridge --output data/ci-genesis-rustbridge --students 3 --seed 20261029
       - name: Verify hashes and compare all logical Parquet tables
         run: python tools/compare_genesis_parquet.py data/ci-genesis-py3 data/ci-genesis-rustbridge
+      - name: Generate native Rust Parquet
+        run: cargo run --release --manifest-path engines/genesis-rs/Cargo.toml -- generate-parquet examples/atlas.demo.json data/ci-genesis-rust-native 3 20261029 64
+      - name: Validate native Rust Parquet against Python v3
+        run: python tools/compare_genesis_parquet.py data/ci-genesis-py3 data/ci-genesis-rust-native
+      - name: Check immutable native output
+        shell: bash
+        run: |
+          if cargo run --release --manifest-path engines/genesis-rs/Cargo.toml -- generate-parquet examples/atlas.demo.json data/ci-genesis-rust-native 3 20261029 64; then
+            echo "ERROR: immutable output was overwritten"
+            exit 1
+          fi
+      - name: Export resolved Cargo.lock for review
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          echo 'BEGIN_RUST_LOCK'
+          cat engines/genesis-rs/Cargo.lock
+          echo 'END_RUST_LOCK'
