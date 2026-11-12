@@ -8,6 +8,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import re
 from pathlib import Path
 
 import duckdb
@@ -37,6 +38,10 @@ def audit(directory: Path, *, memory_limit: str = "512MB", threads: int = 2) -> 
         raise ValueError("only SYNTHETIC data supported")
     if manifest.get("schema_version") != "epa.genesis.dataset.rust_native.v1":
         raise ValueError("unsupported manifest schema")
+    if not isinstance(manifest.get("students"), int) or manifest["students"] < 1:
+        raise ValueError("invalid students in manifest")
+    if not re.fullmatch(r"[1-9][0-9]*(?:KB|MB|GB)", memory_limit, re.IGNORECASE):
+        raise ValueError("memory_limit must be a positive integer with KB/MB/GB unit")
     artifacts = manifest.get("artifacts")
     if not isinstance(artifacts, dict) or set(artifacts) != set(ENTITIES):
         raise ValueError("incomplete artifacts")
@@ -55,7 +60,7 @@ def audit(directory: Path, *, memory_limit: str = "512MB", threads: int = 2) -> 
     try:
         db.execute(f"SET threads = {threads}")
         # DuckDB validates the memory-limit string itself.
-        db.execute("SET memory_limit = ?", [memory_limit])
+        db.execute(f"SET memory_limit = '{memory_limit}'")
         for entity in ENTITIES:
             db.execute(
                 f"CREATE VIEW {entity} AS SELECT * FROM read_parquet({quoted_path(directory / (entity + '.parquet'))})"
