@@ -1,6 +1,7 @@
 //! GENESIS Rust (stage 1): ATLAS validation and Python-compatible stable seeds.
 //! No synthetic grades or Parquet output in this stage.
 mod rng;
+mod records;
 
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
@@ -118,7 +119,7 @@ fn inspect(path: &Path, students: u64, seed: u64) -> Result<Inspection, String> 
     })
 }
 fn usage() -> &'static str {
-    "Usage:\n  genesis-rs seed <part> [part...]\n  genesis-rs inspect <catalog.json> <students> <seed>\n\nStage 1 only: no Parquet generation."
+    "Usage:\n  genesis-rs seed <part> [part...]\n  genesis-rs inspect <catalog.json> <students> <seed>\n  genesis-rs generate-jsonl <catalog.json> <students> <seed> [start_year] [schools] [classes_per_grade]\n\nJSONL stdout is experimental; no native Parquet yet."
 }
 fn run() -> Result<(), String> {
     let args: Vec<String> = env::args().skip(1).collect();
@@ -139,6 +140,20 @@ fn run() -> Result<(), String> {
                 "next_randint_16_to_25": rng.randint(16, 25),
             });
             println!("{}", serde_json::to_string_pretty(&result).map_err(|e| e.to_string())?);
+            Ok(())
+        }
+        Some("generate-jsonl") if (4..=7).contains(&args.len()) => {
+            let students = args[2].parse::<u64>().map_err(|e| format!("students: {e}"))?;
+            let seed = args[3].parse::<u64>().map_err(|e| format!("seed: {e}"))?;
+            let start_year = if args.len() >= 5 { args[4].parse::<u32>().map_err(|e| format!("start_year: {e}"))? } else { 2020 };
+            let school_count = if args.len() >= 6 { args[5].parse::<u32>().map_err(|e| format!("schools: {e}"))? } else { 2 };
+            let classes_per_grade = if args.len() >= 7 { args[6].parse::<u32>().map_err(|e| format!("classes_per_grade: {e}"))? } else { 3 };
+            let (catalog, _) = load_catalog(Path::new(&args[1]))?;
+            let stdout = std::io::stdout();
+            let mut writer = std::io::BufWriter::new(stdout.lock());
+            records::generate(&mut writer, &catalog, records::Config {
+                students, seed, start_year, school_count, classes_per_grade
+            })?;
             Ok(())
         }
         Some("inspect") if args.len() == 4 => {
