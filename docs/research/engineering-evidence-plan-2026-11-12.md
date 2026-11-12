@@ -38,3 +38,18 @@ Manter o laboratório local em Docker Compose e evoluir o GENESIS Rust com **equ
 - Registro de decisões arquiteturais (ADR) e recomendações de evolução; artigo de 15–16 páginas será seleção do relatório, não substituto.
 
 **Regra de evidência:** distinguir implementado, testado, inferido, proposto e não identificado. Não atribuir resultados a execuções ainda não realizadas.
+
+## Auditoria de consultas — mapa de gargalos (etapa inicial)
+
+### Evidência de código — preparação MAPA
+- Antes: `student_timeline.build_snapshots` percorria novamente todos os registros disponíveis do mesmo estudante/disciplina ao criar cada snapshot; custo de varredura repetida proporcional ao número de anos observados.
+- Nesta implementação: indexação única por `(student_id, subject_id)` e `enrollment_id`, processamento cronológico com acumulador de notas e frequências, mantendo exatamente os atributos e cortes anteriores.
+- Teste de regressão: comparação contra cópia do algoritmo original com seeds diferentes, 1/7/24 estudantes, N1/N2/N3; a equivalência ainda depende de passar na CI.
+- Não reportar speedup antes de comparar tempos e memória em execuções equivalentes. A etapa reduz repetição de varreduras, mas outras fases (geração, Parquet, validação, modelos) podem dominar o tempo total.
+
+### Consultas e ingestão para inspeção posterior
+- O projeto Rails atual usa **SQLite**, conforme `config/database.yml`; não assumir PostgreSQL em produção.
+- No GENESIS v2, `duckdb.executemany` insere linhas individualmente — candidato a gargalo; requer profiling por entidade e comparação com Arrow/Parquet v3.
+- `read_verified_v2` executa `SELECT * FROM read_parquet(?)` e materializa todas as tabelas em listas Python; avaliar projeção de colunas, filtragem, streaming e verificação de integridade sem perder invariantes.
+- Monitorar contagem de consultas Rails, eager loading versus N+1, filtros e índices usando SQL logs e `EXPLAIN QUERY PLAN` do SQLite.
+- Documentar consultas observadas com parâmetros anonimizados, tamanho da base, plano de execução, duração, volume lido e resultado da otimização.
