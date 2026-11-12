@@ -14,7 +14,7 @@ from pathlib import Path
 import numpy as np
 from sklearn.inspection import permutation_importance
 from sklearn.model_selection import GroupShuffleSplit
-from sklearn.metrics import make_scorer, f1_score
+from sklearn.metrics import f1_score
 
 from epa.core_engine.mapa import CLASSES, FEATURES, feature_vector, models
 from epa.core_engine.student_timeline import CUTS, read_verified_v2, build_snapshots
@@ -41,10 +41,16 @@ def explain_snapshots(rows: list[dict], *, cutoff: int, seed: int, repeats: int 
 
     estimator = models(seed)["random_forest"]
     estimator.fit(x[train], y[train])
-    scorer = make_scorer(f1_score, average="macro", labels=CLASSES, zero_division=0)
-    baseline = float(scorer(estimator, x[test], y[test]))
+    # Explicit estimator scorer avoids scikit-learn's implicit binary pos_label=1
+    # handling with string-valued classes in some versions. The metric remains
+    # macro-F1 over the same fixed three classes, including zero-support labels.
+    def macro_f1(model, features, truth):
+        return float(f1_score(truth, model.predict(features),
+                              average="macro", labels=CLASSES, zero_division=0))
+
+    baseline = macro_f1(estimator, x[test], y[test])
     permutation = permutation_importance(
-        estimator, x[test], y[test], scoring=scorer, n_repeats=repeats,
+        estimator, x[test], y[test], scoring=macro_f1, n_repeats=repeats,
         random_state=seed, n_jobs=1,
     )
     features = [

@@ -20,6 +20,8 @@ def test_heldout_importance_has_only_allowlisted_features(data):
     rows = build_snapshots(data, cutoff=1)
     result = explain_snapshots(rows, cutoff=1, seed=10, repeats=1)
     assert result["algorithm"] == "random_forest"
+    assert 0.0 <= result["baseline_f1_macro"] <= 1.0
+    assert set(result["class_support"]) == {"approved", "recovery", "failed"}
     assert result["train_students"] + result["test_students"] == 24
     assert {f["name"] for f in result["features"]} == set(FEATURES)
     assert "student_id" not in {f["name"] for f in result["features"]}
