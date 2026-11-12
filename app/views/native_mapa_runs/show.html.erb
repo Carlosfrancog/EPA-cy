@@ -1,0 +1,64 @@
+<% content_for :title, "MAPA Nativo ##{@run.id}" %>
+<% content_for :section, "MAPA / Nativo ##{@run.id}" %>
+<% if @run.waiting? %><% content_for :head do %><meta http-equiv="refresh" content="4"><% end %><% end %>
+<div class="page-heading"><div><div class="eyebrow">EPA RESEARCH LAB · RUN #<%= @run.id %></div>
+<h1>Treinamento N1 / N2 / N3</h1><p>Seed <%= @run.seed %> · <%= @run.max_students %> estudantes no máximo · <%= @run.dataset_key %></p></div>
+<%= link_to "← Histórico", native_mapa_runs_path, class: "button button-outline" %></div>
+<section class="panel"><h3>Estado: <%= @run.status.upcase %></h3>
+<% if @run.waiting? %><p>Aguardando worker local; esta página atualiza a cada 4 segundos.</p>
+<% elsif @run.status == "failed" %><p>Erro: <code><%= @run.failure_code %></code>. Consulte logs locais do worker.</p>
+<% elsif @report %><p>Manifesto de entrada: <code><%= @report["feature_manifest_sha256"] %></code></p>
+<p>SHA-256 do relatório: <code><%= @run.report_sha256 %></code></p><% end %></section>
+<% if @report %>
+  <section class="panel" data-native-timeline>
+    <div class="panel-heading"><h3>Timelapse dos cortes acadêmicos</h3><span class="subtle-pill">Dados medidos, N1 → N3</span></div>
+    <p class="muted">Animação da comparação de cortes, não das épocas internas do treinamento.</p>
+    <label for="native-cut">Corte selecionado: <output data-cut-label>N1</output></label>
+    <input id="native-cut" data-cut-range type="range" min="1" max="3" step="1" value="1" aria-label="Corte acadêmico">
+    <button type="button" class="button button-outline" data-cut-play>Reproduzir N1 → N3</button>
+    <div class="native-chart" data-native-plot></div>
+    <script type="application/json" data-native-data><%= raw json_escape(@report.fetch("protocols").map { |b| { cutoff: b["cutoff_term"], results: b["results"].map { |r| { model: r["model"], f1: r["f1_macro"], recall_failed: r.fetch("recall_by_class", {})["failed"], log_loss: r["log_loss"], brier: r["brier_multiclass"] } } } }.to_json) %></script>
+  </section>
+  <% @report.fetch("protocols", []).each do |block| %>
+    <section class="panel"><h3>N<%= block["cutoff_term"] %> · <%= block["test_observations"] %> observações de teste</h3>
+    <div class="table-wrap"><table class="runs-table"><thead><tr><th>Modelo</th><th>F1 macro</th><th>Recall reprovação</th><th>Log Loss ↓</th><th>Brier ↓</th><th>Fit (s)</th></tr></thead><tbody>
+    <% block["results"].each do |result| %><tr><td><%= result["model"].humanize %></td>
+      <% %w[f1_macro].each do |metric| %><td><%= number_with_precision(result[metric], precision: 4) %></td><% end %>
+      <td><%= number_to_percentage(100 * result.dig("recall_by_class", "failed"), precision: 1) %></td>
+      <td><%= number_with_precision(result["log_loss"], precision: 4) %></td>
+      <td><%= number_with_precision(result["brier_multiclass"], precision: 4) %></td>
+      <td><%= number_with_precision(result["fit_seconds"], precision: 3) %></td></tr><% end %>
+    </tbody></table></div>
+    <% block["results"].each do |result| %><details><summary><%= result["model"].humanize %> · Matriz de confusão</summary>
+      <div class="table-wrap"><table class="runs-table"><thead><tr><th>Real / Previsto</th>
+      <% @report["classes"].each do |label| %><th><%= label %></th><% end %></tr></thead><tbody>
+      <% result["confusion_matrix"].each_with_index do |row, index| %>
+        <tr><th><%= @report["classes"][index] %></th><% row.each do |count| %><td><%= count %></td><% end %></tr>
+      <% end %></tbody></table></div></details><% end %>
+    </section>
+  <% end %>
+  <% if @run.models.include?("mlp") %>
+    <section class="panel"><h3>MLP · Diagrama da arquitetura</h3>
+    <p class="muted">Esquema de topologia 11 → 32 → 16 → 3. Sem pesos/ativações por época; este relatório não captura esses valores.</p>
+    <svg class="native-network" viewBox="0 0 740 535" role="img" aria-label="Topologia da MLP: 11 entradas, 32 e 16 neurônios ocultos, 3 saídas">
+      <% [11,32,16,3].each_with_index do |count, layer| %>
+        <% count.times do |i| %><circle cx="<%= 85 + layer * 185 %>" cy="<%= 28 + (i + 0.5) * 470.0 / count %>" r="<%= count == 32 ? 4 : 7 %>" fill="<%= layer == 3 ? "#176f66" : "#76b8ad" %>"/>
+        <% end %>
+        <text x="<%= 85 + layer * 185 %>" y="520" font-size="13" fill="#406b67" text-anchor="middle"><%= ["11 features", "32 ocultos", "16 ocultos", "3 classes"][layer] %></text>
+      <% end %>
+    </svg></section>
+  <% end %>
+  <% if @run.models.include?("random_forest") %>
+    <section class="panel"><h3>Random Forest · Diagrama de funcionamento</h3>
+    <p class="muted">Árvores ilustrativas — não são árvores ajustadas. Para exibir cortes reais dos nós precisamos exportar <code>estimators_</code> e seus thresholds de forma controlada.</p>
+    <svg class="native-network" viewBox="0 0 740 210" role="img" aria-label="Floresta aleatória com três árvores esquemáticas">
+      <% 3.times do |tree| %><g transform="translate(<%= 125 + tree * 245 %>,15)" stroke="#4d9a8d" stroke-width="2">
+        <path d="M0 30 L-55 90 M0 30 L55 90 M-55 90 L-82 150 M-55 90 L-28 150 M55 90 L28 150 M55 90 L82 150" fill="none"/>
+        <% [[0,30],[-55,90],[55,90],[-82,150],[-28,150],[28,150],[82,150]].each do |x,y| %>
+          <circle cx="<%= x %>" cy="<%= y %>" r="11" fill="#e4f5ed"/></g><g transform="translate(<%= 125 + tree * 245 %>,15)"></g><% end %>
+        <text x="<%= 125 + tree * 245 %>" y="200" text-anchor="middle" fill="#406b67">Árvore <%= tree + 1 %> (esquema)</text>
+      <% end %>
+    </svg></section>
+  <% end %>
+  <div class="panel slim-panel">Dados sintéticos. Nenhuma evidência de acurácia escolar real. Os resultados não constituem validação estatística multisseed ou inferência em produção.</div>
+<% end %>
