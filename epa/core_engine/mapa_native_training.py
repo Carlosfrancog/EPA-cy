@@ -50,7 +50,11 @@ def scores(y, pred, proba):
         "f1_macro": float(f1_score(y,pred,labels=CLASSES,average="macro",zero_division=0)),
         "recall_by_class": dict(zip(CLASSES,[float(v) for v in recall_score(y,pred,labels=CLASSES,average=None,zero_division=0)])),
         "confusion_matrix": confusion_matrix(y,pred,labels=CLASSES).tolist(),
-        "log_loss": float(log_loss(y,proba,labels=CLASSES)),
+        "log_loss": float(log_loss(
+            y,
+            proba[:, [CLASSES.index(label) for label in sorted(CLASSES)]],
+            labels=sorted(CLASSES),
+        )),
         "brier_multiclass": float(np.mean(np.sum((proba-hot)**2,axis=1))),
     }
 
