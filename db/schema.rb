@@ -1,4 +1,19 @@
-ActiveRecord::Schema[8.0].define(version: 2026_11_01_230000) do
+ActiveRecord::Schema[8.0].define(version: 2026_11_12_230000) do
+  create_table "native_mapa_runs", force: :cascade do |t|
+    t.integer "seed", null: false
+    t.integer "max_students", null: false
+    t.string "dataset_key", null: false
+    t.text "model_keys_json", null: false
+    t.string "status", default: "queued", null: false
+    t.text "report_json"
+    t.string "report_sha256"
+    t.string "failure_code"
+    t.datetime "started_at"
+    t.datetime "finished_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["status"], name: "index_native_mapa_runs_on_status"
+  end
   create_table "experiment_runs", force: :cascade do |t|
     t.string "model_key", null: false
     t.integer "seed", null: false
