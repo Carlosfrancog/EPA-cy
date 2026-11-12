@@ -21,8 +21,8 @@ pub struct Config {
 
 impl Config {
     pub fn validate(&self) -> Result<(), String> {
-        if !(1..=2000).contains(&self.students) {
-            return Err("pilot JSONL generator supports 1..2000 students".into());
+        if !(1..=100_000).contains(&self.students) {
+            return Err("GENESIS Rust supports 1..100000 students".into());
         }
         if !(2000..=2100).contains(&self.start_year) {
             return Err("start_year must be 2000..2100".into());
@@ -203,6 +203,16 @@ mod tests {
         let invalid = Config { students: 0, seed: 42, start_year: 2020,
             school_count: 2, classes_per_grade: 3 };
         assert!(invalid.validate().is_err());
+    }
+    #[test]
+    fn scale_config_accepts_100k_and_rejects_excess() {
+        let base = Config {
+            students: 100_000, seed: 42, start_year: 2020,
+            school_count: 2, classes_per_grade: 3,
+        };
+        assert!(base.validate().is_ok());
+        assert!(Config { students: 100_001, ..base }.validate().is_err());
+        assert!(Config { students: 0, ..base }.validate().is_err());
     }
     #[test]
     fn callback_matches_legacy_jsonl_across_seeds() {
