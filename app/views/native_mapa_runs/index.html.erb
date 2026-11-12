@@ -1,0 +1,32 @@
+<% content_for :title, "MAPA · Laboratório Nativo" %>
+<% content_for :section, "MAPA / GENESIS Rust" %>
+<div class="page-heading"><div><div class="eyebrow">EPA · MAPA RUST NATIVE</div><h1>Laboratório Visual MAPA</h1>
+<p>Treine os modelos sobre features N1/N2/N3 do GENESIS Rust, sem terminal.</p></div>
+<%= link_to "MAPA legado →", mapa_runs_path, class: "button button-outline" %></div>
+<div class="two-columns">
+<section class="panel"><div class="panel-heading"><h3>Configurar experimento</h3><span class="subtle-pill">Somente execução local</span></div>
+<%= form_with url: native_mapa_runs_path, method: :post, class: "experiment-form" do %>
+  <label for="dataset_key">Conjunto GENESIS → MAPA verificado</label>
+  <%= select_tag :dataset_key, options_for_select(@datasets.map { |key| [key, key] }), class: "input", required: true %>
+  <label for="seed">Seed</label>
+  <%= number_field_tag :seed, 20261029, in: 0..999999999, class: "input", required: true %>
+  <label for="max_students">Limite de estudantes (8–5000)</label>
+  <%= number_field_tag :max_students, 500, in: 8..5000, class: "input", required: true %>
+  <label>Modelos</label>
+  <% NativeMapaRun::ALGORITHMS.each do |model| %>
+    <label class="native-choice"><%= check_box_tag "models[]", model, %w[majority logistic_regression].include?(model) %> <%= model.humanize %></label>
+  <% end %>
+  <p class="muted">Os três cutoffs são avaliados com um único split agrupado por estudante. Os resultados são sintéticos.</p>
+  <%= submit_tag "Iniciar treinamento", class: "button button-primary button-wide", disabled: @datasets.empty? %>
+<% end %></section>
+<section class="panel"><h3>Contrato do laboratório</h3>
+<p>Usa <code>epa.core_engine.mapa_native_training</code> sobre features Parquet já exportadas. Cada run possui relatório imutável, hash, seed, limite de alunos e seleção de modelos.</p>
+<p>O GENESIS Rust e a exportação dos Parquet permanecem processos separados. Esta tela não inicia geração massiva de dados nem modifica datasets.</p>
+<% if @datasets.empty? %><p class="muted">Nenhum <code>data/mapa-features-*/manifest.json</code> sintético encontrado. Exporte features primeiro.</p><% end %>
+</section></div>
+<section class="panel"><h3>Histórico de treinamento nativo</h3>
+<div class="table-wrap"><table class="runs-table"><thead><tr><th>Run</th><th>Dataset</th><th>Seed</th><th>Estudantes</th><th>Status</th><th></th></tr></thead>
+<tbody><% @runs.each do |run| %><tr><td>#<%= run.id %></td><td><code><%= run.dataset_key %></code></td>
+<td><%= run.seed %></td><td><%= run.max_students %></td><td><%= run.status %></td>
+<td><%= link_to "Visualizar", native_mapa_run_path(run), class: "text-link" %></td></tr><% end %></tbody></table></div>
+</section>
