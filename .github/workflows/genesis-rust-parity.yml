@@ -28,13 +28,13 @@ jobs:
       - name: Rust compiler
         run: rustc --version
       - name: Run golden-vector tests
-        run: cargo test --manifest-path engines/genesis-rs/Cargo.toml
+        run: cargo test --locked --manifest-path engines/genesis-rs/Cargo.toml
       - name: Inspect synthetic ATLAS demo
-        run: cargo run --release --manifest-path engines/genesis-rs/Cargo.toml -- inspect examples/atlas.demo.json 120 20261029
+        run: cargo run --locked --release --manifest-path engines/genesis-rs/Cargo.toml -- inspect examples/atlas.demo.json 120 20261029
       - name: Verify SHA256 seed
         shell: bash
         run: |
-          actual=$(cargo run --quiet --release --manifest-path engines/genesis-rs/Cargo.toml -- seed 20261029 SYN00000001 profile)
+          actual=$(cargo run --locked --quiet --release --manifest-path engines/genesis-rs/Cargo.toml -- seed 20261029 SYN00000001 profile)
           test "$actual" = "3051383292237719500"
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -53,19 +53,13 @@ jobs:
       - name: Verify hashes and compare all logical Parquet tables
         run: python tools/compare_genesis_parquet.py data/ci-genesis-py3 data/ci-genesis-rustbridge
       - name: Generate native Rust Parquet
-        run: cargo run --release --manifest-path engines/genesis-rs/Cargo.toml -- generate-parquet examples/atlas.demo.json data/ci-genesis-rust-native 3 20261029 64
+        run: cargo run --locked --release --manifest-path engines/genesis-rs/Cargo.toml -- generate-parquet examples/atlas.demo.json data/ci-genesis-rust-native 3 20261029 64
       - name: Validate native Rust Parquet against Python v3
         run: python tools/compare_genesis_parquet.py data/ci-genesis-py3 data/ci-genesis-rust-native
       - name: Check immutable native output
         shell: bash
         run: |
-          if cargo run --release --manifest-path engines/genesis-rs/Cargo.toml -- generate-parquet examples/atlas.demo.json data/ci-genesis-rust-native 3 20261029 64; then
+          if cargo run --locked --release --manifest-path engines/genesis-rs/Cargo.toml -- generate-parquet examples/atlas.demo.json data/ci-genesis-rust-native 3 20261029 64; then
             echo "ERROR: immutable output was overwritten"
             exit 1
           fi
-      - name: Export resolved Cargo.lock for review
-        if: matrix.os == 'ubuntu-latest'
-        run: |
-          echo 'BEGIN_RUST_LOCK'
-          cat engines/genesis-rs/Cargo.lock
-          echo 'END_RUST_LOCK'
