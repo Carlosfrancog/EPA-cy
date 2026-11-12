@@ -5,6 +5,8 @@ on:
     paths:
       - 'engines/genesis-rs/**'
       - 'tools/check_genesis_rust_stream.py'
+      - 'tools/compare_genesis_parquet.py'
+      - 'epa/genesis/rust_bridge.py'
       - '.github/workflows/genesis-rust-parity.yml'
   push:
     branches: [develop]
@@ -41,3 +43,11 @@ jobs:
         env:
           PYTHONPATH: .
         run: python tools/check_genesis_rust_stream.py --students 3 --seed 20261029
+      - name: Install PyArrow and DuckDB for Parquet equivalence
+        run: python -m pip install -e ".[research,streaming]"
+      - name: Create Python GENESIS v3 small reference
+        run: python -m epa.genesis.v3 --output data/ci-genesis-py3 --students 3 --seed 20261029
+      - name: Persist Rust records as Parquet via bridge
+        run: python -m epa.genesis.rust_bridge --output data/ci-genesis-rustbridge --students 3 --seed 20261029
+      - name: Verify hashes and compare all logical Parquet tables
+        run: python tools/compare_genesis_parquet.py data/ci-genesis-py3 data/ci-genesis-rustbridge
