@@ -30,9 +30,10 @@ def same_values(expected: dict, actual: dict, *, tolerance: float) -> list[str]:
     messages = []
     if set(expected) != set(actual):
         return [f"columns differ: expected={sorted(expected)} actual={sorted(actual)}"]
+    float_columns = {"assessment_grade", "attendance_rate"}
     for key, value in expected.items():
         received = actual[key]
-        if isinstance(value, float) and isinstance(received, (float, int)):
+        if key in float_columns and isinstance(value, (int, float)) and isinstance(received, (int, float)):
             if not math.isclose(value, received, rel_tol=0, abs_tol=tolerance):
                 messages.append(f"{key}: Python={value!r}, Rust={received!r}")
         elif value != received or type(value) is not type(received):
