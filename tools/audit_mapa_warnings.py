@@ -81,6 +81,10 @@ def audit_cutoff(rows: list[dict], *, cutoff: int, seed: int) -> dict:
     elapsed = time.perf_counter() - start
     mlp = model.named_steps["mlpclassifier"]
     transformer = model.named_steps["simpleimputer"]
+    with warnings.catch_warnings(record=True) as transform_warnings:
+        warnings.simplefilter("always")
+        features_out = int(transformer.transform(x[train[:1]]).shape[1])
+    captured.extend(transform_warnings)
     result["mlp"] = {
         "fit_wall_seconds": elapsed,
         "max_iter_config": int(mlp.max_iter),
