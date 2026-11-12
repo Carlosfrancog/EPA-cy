@@ -8,7 +8,7 @@ from epa.atlas.catalog import load_catalog
 from epa.genesis.v2 import build_dataset
 from epa.core_engine.mapa import FEATURES
 from epa.core_engine.student_timeline import build_snapshots
-from tools.audit_mapa_warnings import SCHEMA, audit_features, audit_cutoff, run
+from epa.core_engine.mapa_warning_audit import SCHEMA, audit_features, audit_cutoff, run
 
 CATALOG = Path(__file__).resolve().parents[1] / "examples" / "atlas.demo.json"
 
