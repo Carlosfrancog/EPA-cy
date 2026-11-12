@@ -38,7 +38,7 @@ def test_commands_share_seed_and_student_count():
         assert "20261029" in command
         assert "7" in command
         assert str(destination) in command
-        assert "examples/atlas.demo.json" in command
+        assert Path("examples/atlas.demo.json") in map(Path, command)
 
 
 def test_unknown_engine_is_rejected():
