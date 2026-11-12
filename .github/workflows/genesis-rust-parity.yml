@@ -4,11 +4,13 @@ on:
   pull_request:
     paths:
       - 'engines/genesis-rs/**'
+      - 'tools/check_genesis_rust_stream.py'
       - '.github/workflows/genesis-rust-parity.yml'
   push:
     branches: [develop]
     paths:
       - 'engines/genesis-rs/**'
+      - 'tools/check_genesis_rust_stream.py'
       - '.github/workflows/genesis-rust-parity.yml'
 
 jobs:
@@ -31,3 +33,11 @@ jobs:
         run: |
           actual=$(cargo run --quiet --release --manifest-path engines/genesis-rs/Cargo.toml -- seed 20261029 SYN00000001 profile)
           test "$actual" = "3051383292237719500"
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Verify Rust academic records against Python v3
+        env:
+          PYTHONPATH: .
+        run: python tools/check_genesis_rust_stream.py --students 3 --seed 20261029
