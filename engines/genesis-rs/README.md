@@ -1,28 +1,31 @@
-# GENESIS Core Rust — etapa 1
+# GENESIS Core Rust — etapa 2: aleatoriedade compatível com Python
 
-Esta etapa adiciona a base do motor Rust ao EPA **sem alterar os geradores Python**.
+O mecanismo `rng.rs` replica o fluxo **MT19937** de `random.Random(<u64>)` do CPython para as operações usadas no GENESIS: `random()`, `uniform()`, `gauss()` (com cache) e `randint()` com amostragem por rejeição.
 
-## Executar no Windows (raiz do repositório)
+## Validação
+
+Na raiz do repositório:
 
 ```powershell
 cargo test --manifest-path engines/genesis-rs/Cargo.toml
 cargo run --release --manifest-path engines/genesis-rs/Cargo.toml -- seed 20261029 SYN00000001 profile
 cargo run --release --manifest-path engines/genesis-rs/Cargo.toml -- inspect examples/atlas.demo.json 120 20261029
+cargo run --release --manifest-path engines/genesis-rs/Cargo.toml -- rng-probe 3051383292237719500
 ```
 
-A derivação da seed replica `epa.genesis.v2.stable_seed`: SHA-256 do texto UTF-8 unido por `|`, lendo os primeiros oito bytes como inteiro big-endian sem sinal.
+Vetores de referência gerados com Python `random.Random(seed)`:
+- `random()` após seed `3051383292237719500` → `0.020478941183366572`
+- `uniform(-1.65, 1.65)` após a mesma seed → `-1.5824194940948901`
+- `gauss(0, 0.95)` após seed `16817751025044115065` → `0.16693285048241108`
+- `randint(16, 25)` após essa seed → `21`
 
-Vetores de teste extraídos da implementação Python:
-- `20261029|SYN00000001|profile` → `3051383292237719500`
-- `20261029|SYN00000001|2020|section` → `17544070759066566074`
+O `rng-probe` consome uma única sequência contínua; seu segundo valor não é o primeiro `uniform` de uma instância recém-inicializada.
 
-A inspeção do catálogo demonstra as quantidades esperadas com **configuração padrão** de duas escolas, três turmas por série e quatro períodos por ano.
+## Limitações
 
-**Limites:** ainda não há geração de notas/frequência, equivalente MT19937+gauss do Python, paralelismo ou gravação Parquet. Nenhum ganho de velocidade é alegado nesta etapa.
+- Compatibilidade destinada a seeds derivadas como inteiros positivos de 64 bits; não cobre todos os tipos de seed do Python.
+- Pode haver pequenas diferenças de arredondamento entre bibliotecas matemáticas/arquiteturas, especialmente em `gauss`.
+- Esta etapa ainda **não gera registros Parquet** nem calcula notas escolares; o código antigo Python permanece como referência.
+- A paridade lógica dos registros v2/v3 já foi testada separadamente; a paridade da futura geração Rust dependerá de novo teste de ponta a ponta.
 
-## Próximos passos
-
-1. Golden tests comparando amostras dos registros v2/v3.
-2. Implementar compatibilidade do RNG Python e suas distribuições (incluindo arredondamento).
-3. Escrita Parquet incremental e manifestos versionados.
-4. Benchmarks de tempo, memória e escalabilidade, sempre com saídas imutáveis.
+Os testes unitários executam automaticamente em Windows e Linux por GitHub Actions.
