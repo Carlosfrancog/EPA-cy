@@ -57,3 +57,35 @@ cargo test --locked --manifest-path engines/genesis-rs/Cargo.toml
 ```
 
 A evolução da pesquisa, auditoria de SQL/consultas e entregáveis completos estão em `docs/research/engineering-evidence-plan-2026-11-12.md`.
+
+## Etapa 4 — Parquet nativo em Rust
+
+O comando a seguir gera registros escolares sintéticos e grava diretamente
+cinco arquivos Parquet usando ArrowWriter em Rust, com manifesto e hashes SHA-256:
+
+```powershell
+cargo run --release --manifest-path engines/genesis-rs/Cargo.toml -- generate-parquet examples/atlas.demo.json data/genesis-native-3-001 3 20261029 64
+python -m epa.genesis.v3 --output data/genesis-python-3-001 --students 3 --seed 20261029
+python tools/compare_genesis_parquet.py data/genesis-python-3-001 data/genesis-native-3-001
+```
+
+A ordem dos argumentos adicionais do Rust e: tamanho do row group,
+ano inicial, numero de escolas e turmas por serie. Os valores padrao sao
+4096, 2020, 2 e 3, respectivamente. A faixa inicial de 1 a 2000 alunos
+e intencional enquanto homologamos os contratos e a escalabilidade.
+
+Cada entidade e gravada em lotes com memoria limitada, e o diretorio de
+saida e publicado apenas quando todos os arquivos e o manifesto terminam.
+Saidas existentes nao sao sobrescritas.
+
+**Contrato:** schema `epa.genesis.dataset.rust_native.v1`. O leitor MAPA
+atual nao deve aceitar automaticamente esse schema sem homologacao.
+O motor nao usa Python ou PyArrow para gravar Parquet, mas ainda utiliza
+serializacao JSON **dentro** do processo Rust para se conectar ao
+gerador existente. O proximo passo de desempenho sera substituir essa
+interface intermediaria por callback de linhas tipadas.
+
+As implementacoes Python v2, Python v3, Rust com PyArrow e Rust nativo
+devem ser comparadas somente depois de fixar mesmas seeds, catalogo,
+quantidade de alunos, hardware, metodologia de warm-up e numero de rodadas.
+Sem esses controles, nao temos evidencia de speedup confiavel.
