@@ -15,6 +15,7 @@ from epa.genesis.v2 import build_dataset, write_dataset
 from epa.core_engine.student_timeline import build_snapshots
 from epa.core_engine.mapa import FEATURES, feature_vector
 from epa.core_engine.mapa_feature_export import export, SCHEMA
+from epa.genesis.parquet_deep_audit import quoted_path
 
 CATALOG = Path(__file__).resolve().parents[1] / "examples" / "atlas.demo.json"
 
@@ -93,9 +94,9 @@ def test_rejects_missing_academic_term(tmp_path):
     modified = tmp_path / "modified.parquet"
     with duckdb.connect(":memory:") as connection:
         connection.execute(
-            "COPY (SELECT * FROM read_parquet(?) WHERE NOT "
-            "(student_id = 'SYN00000001' AND term = 4)) TO ? (FORMAT PARQUET)",
-            [str(original), str(modified)]
+            f"COPY (SELECT * FROM read_parquet({quoted_path(original)}) WHERE NOT "
+            f"(student_id = 'SYN00000001' AND term = 4)) "
+            f"TO {quoted_path(modified)} (FORMAT PARQUET)"
         )
         new_count = connection.execute(
             "SELECT COUNT(*) FROM read_parquet(?)", [str(modified)]
