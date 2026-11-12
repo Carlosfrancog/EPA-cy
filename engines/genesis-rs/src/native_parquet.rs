@@ -69,13 +69,13 @@ fn period_batch(schema: &Arc<Schema>, records: &[BufferedRow]) -> Result<RecordB
         BufferedRow::Period(period) => Ok(period),
         BufferedRow::Json(_) => Err("unexpected JSON period row".to_string()),
     }).collect::<Result<_, _>>()?;
-    arrays.push(Arc::new(StringArray::from_iter_values(rows.iter().map(|r| r.enrollment_id.as_ref()))) as ArrayRef);
-    arrays.push(Arc::new(StringArray::from_iter_values(rows.iter().map(|r| r.student_id.as_ref()))) as ArrayRef);
-    arrays.push(Arc::new(StringArray::from_iter_values(rows.iter().map(|r| r.class_id.as_ref()))) as ArrayRef);
+    arrays.push(Arc::new(StringArray::from_iter_values(rows.iter().map(|r| r.enrollment_id.as_str()))) as ArrayRef);
+    arrays.push(Arc::new(StringArray::from_iter_values(rows.iter().map(|r| r.student_id.as_str()))) as ArrayRef);
+    arrays.push(Arc::new(StringArray::from_iter_values(rows.iter().map(|r| r.class_id.as_str()))) as ArrayRef);
     arrays.push(Arc::new(Int32Array::from(rows.iter().map(|r| r.academic_year as i32).collect::<Vec<_>>())) as ArrayRef);
     arrays.push(Arc::new(Int32Array::from(rows.iter().map(|r| r.grade_level as i32).collect::<Vec<_>>())) as ArrayRef);
-    arrays.push(Arc::new(StringArray::from_iter_values(rows.iter().map(|r| r.subject_id.as_ref()))) as ArrayRef);
-    arrays.push(Arc::new(StringArray::from_iter_values(rows.iter().map(|r| r.knowledge_area.as_ref()))) as ArrayRef);
+    arrays.push(Arc::new(StringArray::from_iter_values(rows.iter().map(|r| r.subject_id.as_str()))) as ArrayRef);
+    arrays.push(Arc::new(StringArray::from_iter_values(rows.iter().map(|r| r.knowledge_area.as_str()))) as ArrayRef);
     arrays.push(Arc::new(Int32Array::from(rows.iter().map(|r| r.term as i32).collect::<Vec<_>>())) as ArrayRef);
     arrays.push(Arc::new(Float64Array::from(rows.iter().map(|r| r.assessment_grade).collect::<Vec<_>>())) as ArrayRef);
     arrays.push(Arc::new(Int32Array::from(rows.iter().map(|r| r.scheduled_sessions as i32).collect::<Vec<_>>())) as ArrayRef);
@@ -84,7 +84,7 @@ fn period_batch(schema: &Arc<Schema>, records: &[BufferedRow]) -> Result<RecordB
     arrays.push(Arc::new(Int32Array::from(rows.iter().map(|r| r.absences_excused as i32).collect::<Vec<_>>())) as ArrayRef);
     arrays.push(Arc::new(Int32Array::from(rows.iter().map(|r| r.absences_unexcused as i32).collect::<Vec<_>>())) as ArrayRef);
     arrays.push(Arc::new(Float64Array::from(rows.iter().map(|r| r.attendance_rate).collect::<Vec<_>>())) as ArrayRef);
-    arrays.push(Arc::new(StringArray::from_iter_values(rows.iter().map(|r| r.data_classification.as_ref()))) as ArrayRef);
+    arrays.push(Arc::new(StringArray::from_iter_values(rows.iter().map(|r| r.data_classification))) as ArrayRef);
     RecordBatch::try_new(Arc::clone(schema), arrays).map_err(|e| e.to_string())
 }
 
