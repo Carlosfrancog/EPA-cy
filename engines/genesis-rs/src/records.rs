@@ -4,8 +4,35 @@
 //! No entire-dataset collection is held in memory.
 use super::{stable_seed, student_id, Catalog};
 use crate::rng::PythonRandom;
+use serde::Serialize;
 use serde_json::{json, Value};
 use std::io::{self, Write};
+
+
+#[derive(Clone, Debug, Serialize)]
+pub struct PeriodRecord {
+    pub enrollment_id: String,
+    pub student_id: String,
+    pub class_id: String,
+    pub academic_year: u32,
+    pub grade_level: u32,
+    pub subject_id: String,
+    pub knowledge_area: String,
+    pub term: u32,
+    pub assessment_grade: f64,
+    pub scheduled_sessions: u32,
+    pub present_sessions: u32,
+    pub absences_total: u32,
+    pub absences_excused: u32,
+    pub absences_unexcused: u32,
+    pub attendance_rate: f64,
+    pub data_classification: &'static str,
+}
+
+pub enum GeneratedRow {
+    Json(&'static str, Value),
+    Period(PeriodRecord),
+}
 
 const PERIODS: [u32; 4] = [1, 2, 3, 4];
 const AREAS: [&str; 4] = ["MATEMATICA", "LINGUAGENS", "NATUREZA", "HUMANAS"];
@@ -49,11 +76,10 @@ fn write_row<W: Write>(writer: &mut W, entity: &str, row: Value) -> io::Result<(
     writer.write_all(b"\n")
 }
 
-/// Emit logical rows without serializing/deserializing JSON inside the native writer.
-/// The callback receives a structured Value until the typed Arrow refactor.
-pub fn generate_rows<F>(catalog: &Catalog, cfg: Config, mut emit: F) -> Result<(), String>
+/// Emit typed period records without allocating JSON values on the native hot path.
+pub fn generate_typed_rows<F>(catalog: &Catalog, cfg: Config, mut emit: F) -> Result<(), String>
 where
-    F: FnMut(&str, Value) -> Result<(), String>,
+    F: FnMut(GeneratedRow) -> Result<(), String>,
 {
     cfg.validate()?;
     let mut grades: Vec<_> = catalog.grades.iter().collect();
@@ -65,19 +91,19 @@ where
         for school in 1..=cfg.school_count {
             for section in 1..=cfg.classes_per_grade {
                 let class_id = format!("C{year}-{}-S{school:02}-T{section:02}", grade.grade_level);
-                emit("classes", json!({
+                emit(GeneratedRow::Json("classes", json!({
                     "class_id": class_id,
                     "school_id": format!("SCHOOL{school:03}"),
                     "academic_year": year,
                     "grade_level": grade.grade_level,
-                }))?;
+                })))?;
                 for subject in &grade.subjects {
-                    emit("subject_offerings", json!({
+                    emit(GeneratedRow::Json("subject_offerings", json!({
                         "offering_id": format!("{class_id}-{}", subject.id),
                         "class_id": class_id,
                         "subject_id": subject.id,
                         "knowledge_area": subject.area,
-                    }))?;
+                    })))?;
                 }
             }
         }
@@ -86,9 +112,9 @@ where
     let seed_text = cfg.seed.to_string();
     for number in 1..=cfg.students {
         let student = student_id(number);
-        emit("students", json!({
+        emit(GeneratedRow::Json("students", json!({
             "student_id": student, "data_classification": "SYNTHETIC"
-        }))?;
+        })))?;
 
         let profile_seed = stable_seed(&[seed_text.as_str(), student.as_str(), "profile"]);
         let mut profile_rng = PythonRandom::seeded(profile_seed);
@@ -108,11 +134,11 @@ where
             let section = 1 + (section_seed % cfg.classes_per_grade as u64);
             let class_id = format!("C{year}-{}-S{school:02}-T{section:02}", grade.grade_level);
             let enrollment_id = format!("{student}-{year}");
-            emit("enrollments", json!({
+            emit(GeneratedRow::Json("enrollments", json!({
                 "enrollment_id": enrollment_id, "student_id": student,
                 "class_id": class_id, "academic_year": year,
                 "grade_level": grade.grade_level, "status": "ENROLLED"
-            }))?;
+            })))?;
 
             for subject in &grade.subjects {
                 let subject_seed = stable_seed(&[seed_text.as_str(), student.as_str(), subject.id.as_str(), "longitudinal"]);
@@ -145,16 +171,23 @@ where
                     for _ in 0..absences {
                         if rng.random() < 0.23 { excused += 1; }
                     }
-                    emit("period_records", json!({
-                        "enrollment_id": enrollment_id, "student_id": student,
-                        "class_id": class_id, "academic_year": year,
-                        "grade_level": grade.grade_level, "subject_id": subject.id,
-                        "knowledge_area": subject.area, "term": term,
-                        "assessment_grade": score, "scheduled_sessions": sessions,
-                        "present_sessions": present, "absences_total": absences,
-                        "absences_excused": excused, "absences_unexcused": absences - excused,
-                        "attendance_rate": rounded(present as f64 / sessions as f64, 6),
-                        "data_classification": "SYNTHETIC"
+                    emit(GeneratedRow::Period(PeriodRecord {
+                        enrollment_id: enrollment_id.clone(),
+                        student_id: student.clone(),
+                        class_id: class_id.clone(),
+                        academic_year: year,
+                        grade_level: grade.grade_level,
+                        subject_id: subject.id.clone(),
+                        knowledge_area: subject.area.clone(),
+                        term,
+                        assessment_grade: score,
+                        scheduled_sessions: sessions,
+                        present_sessions: present,
+                        absences_total: absences,
+                        absences_excused: excused,
+                        absences_unexcused: absences - excused,
+                        attendance_rate: rounded(present as f64 / sessions as f64, 6),
+                        data_classification: "SYNTHETIC",
                     }))?;
                 }
             }
@@ -163,6 +196,20 @@ where
     Ok(())
 }
 
+
+
+pub fn generate_rows<F>(catalog: &Catalog, cfg: Config, mut emit: F) -> Result<(), String>
+where
+    F: FnMut(&str, Value) -> Result<(), String>,
+{
+    generate_typed_rows(catalog, cfg, |row| match row {
+        GeneratedRow::Json(entity, value) => emit(entity, value),
+        GeneratedRow::Period(record) => {
+            let value = serde_json::to_value(record).map_err(|error| error.to_string())?;
+            emit("period_records", value)
+        }
+    })
+}
 
 pub fn generate<W: Write>(writer: &mut W, catalog: &Catalog, cfg: Config) -> Result<(), String> {
     generate_rows(catalog, cfg, |entity, row| {

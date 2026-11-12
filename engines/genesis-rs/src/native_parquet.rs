@@ -1,8 +1,8 @@
 //! Native Rust Parquet output via ArrowWriter. Bounded row-group buffering.
-//! Structured logical rows are sent directly to Arrow buffers (no JSONL serialization
-//! or parsing). The records still use serde_json::Value internally; dedicated
-//! typed structs and Arrow builders are a separate future optimization.
+//! Period records use typed Rust structs, bypassing serde_json::Value entirely;
+//! smaller entity types retain the old JSON buffer for the next refactor.
 use crate::{load_catalog, records};
+use records::{GeneratedRow, PeriodRecord};
 use arrow_array::{ArrayRef, Float64Array, Int32Array, RecordBatch, StringArray};
 use arrow_schema::{DataType, Field, Schema};
 use parquet::arrow::ArrowWriter;
@@ -58,15 +58,53 @@ fn verify(entity: &str, columns: &[(&str, Kind)], row: &Value) -> Result<(), Str
     }
     Ok(())
 }
-fn batch(schema: &Arc<Schema>, columns: &[(&str, Kind)], rows: &[Value]) -> Result<RecordBatch, String> {
+enum BufferedRow {
+    Json(Value),
+    Period(PeriodRecord),
+}
+
+fn period_batch(schema: &Arc<Schema>, records: &[BufferedRow]) -> Result<RecordBatch, String> {
+    let mut arrays: Vec<ArrayRef> = Vec::with_capacity(16);
+    let rows: Vec<&PeriodRecord> = records.iter().map(|r| match r {
+        BufferedRow::Period(period) => Ok(period),
+        BufferedRow::Json(_) => Err("unexpected JSON period row".to_string()),
+    }).collect::<Result<_, _>>()?;
+    arrays.push(Arc::new(StringArray::from_iter_values(rows.iter().map(|r| r.enrollment_id.as_str()))) as ArrayRef);
+    arrays.push(Arc::new(StringArray::from_iter_values(rows.iter().map(|r| r.student_id.as_str()))) as ArrayRef);
+    arrays.push(Arc::new(StringArray::from_iter_values(rows.iter().map(|r| r.class_id.as_str()))) as ArrayRef);
+    arrays.push(Arc::new(Int32Array::from(rows.iter().map(|r| r.academic_year as i32).collect::<Vec<_>>())) as ArrayRef);
+    arrays.push(Arc::new(Int32Array::from(rows.iter().map(|r| r.grade_level as i32).collect::<Vec<_>>())) as ArrayRef);
+    arrays.push(Arc::new(StringArray::from_iter_values(rows.iter().map(|r| r.subject_id.as_str()))) as ArrayRef);
+    arrays.push(Arc::new(StringArray::from_iter_values(rows.iter().map(|r| r.knowledge_area.as_str()))) as ArrayRef);
+    arrays.push(Arc::new(Int32Array::from(rows.iter().map(|r| r.term as i32).collect::<Vec<_>>())) as ArrayRef);
+    arrays.push(Arc::new(Float64Array::from(rows.iter().map(|r| r.assessment_grade).collect::<Vec<_>>())) as ArrayRef);
+    arrays.push(Arc::new(Int32Array::from(rows.iter().map(|r| r.scheduled_sessions as i32).collect::<Vec<_>>())) as ArrayRef);
+    arrays.push(Arc::new(Int32Array::from(rows.iter().map(|r| r.present_sessions as i32).collect::<Vec<_>>())) as ArrayRef);
+    arrays.push(Arc::new(Int32Array::from(rows.iter().map(|r| r.absences_total as i32).collect::<Vec<_>>())) as ArrayRef);
+    arrays.push(Arc::new(Int32Array::from(rows.iter().map(|r| r.absences_excused as i32).collect::<Vec<_>>())) as ArrayRef);
+    arrays.push(Arc::new(Int32Array::from(rows.iter().map(|r| r.absences_unexcused as i32).collect::<Vec<_>>())) as ArrayRef);
+    arrays.push(Arc::new(Float64Array::from(rows.iter().map(|r| r.attendance_rate).collect::<Vec<_>>())) as ArrayRef);
+    arrays.push(Arc::new(StringArray::from_iter_values(rows.iter().map(|r| r.data_classification))) as ArrayRef);
+    RecordBatch::try_new(Arc::clone(schema), arrays).map_err(|e| e.to_string())
+}
+
+fn batch(schema: &Arc<Schema>, columns: &[(&str, Kind)], rows: &[BufferedRow], entity: &str) -> Result<RecordBatch, String> {
+    if entity == "period_records" {
+        return period_batch(schema, rows);
+    }
+    let values: Vec<&Value> = rows.iter().map(|row| match row {
+        BufferedRow::Json(value) => Ok(value),
+        BufferedRow::Period(_) => Err("unexpected typed row in JSON entity".to_string()),
+    }).collect::<Result<_, _>>()?;
+
     let mut arrays: Vec<ArrayRef> = Vec::with_capacity(columns.len());
     for (name, kind) in columns {
         arrays.push(match kind {
-            Text => Arc::new(StringArray::from_iter_values(rows.iter().map(|r|
+            Text => Arc::new(StringArray::from_iter_values(values.iter().map(|r|
                 r[*name].as_str().expect("verified string")))) as ArrayRef,
-            Integer => Arc::new(Int32Array::from(rows.iter().map(|r|
+            Integer => Arc::new(Int32Array::from(values.iter().map(|r|
                 r[*name].as_i64().expect("verified integer") as i32).collect::<Vec<_>>())) as ArrayRef,
-            Double => Arc::new(Float64Array::from(rows.iter().map(|r|
+            Double => Arc::new(Float64Array::from(values.iter().map(|r|
                 r[*name].as_f64().expect("verified float")).collect::<Vec<_>>())) as ArrayRef,
         });
     }
@@ -76,7 +114,8 @@ struct ParquetEntity {
     columns: Vec<(&'static str, Kind)>,
     schema: Arc<Schema>,
     writer: ArrowWriter<File>,
-    rows: Vec<Value>,
+    rows: Vec<BufferedRow>,
+    entity: String,
     limit: usize,
     count: usize,
 }
@@ -86,18 +125,30 @@ impl ParquetEntity {
         let schema = schema_for(&columns);
         let file = File::create(stage.join(format!("{entity}.parquet"))).map_err(|e| e.to_string())?;
         let writer = ArrowWriter::try_new(file, Arc::clone(&schema), None).map_err(|e| e.to_string())?;
-        Ok(Self { columns, schema, writer, rows: Vec::with_capacity(limit), limit, count: 0 })
+        Ok(Self { columns, schema, writer, rows: Vec::with_capacity(limit), entity: entity.to_owned(), limit, count: 0 })
     }
-    fn push(&mut self, entity: &str, row: Value) -> Result<(), String> {
-        verify(entity, &self.columns, &row)?;
-        self.rows.push(row);
+    fn push(&mut self, row: GeneratedRow) -> Result<(), String> {
+        let buffered = match row {
+            GeneratedRow::Json(entity, value) if entity == self.entity => {
+                verify(entity, &self.columns, &value)?;
+                BufferedRow::Json(value)
+            }
+            GeneratedRow::Period(value) if self.entity == "period_records" => {
+                if !value.assessment_grade.is_finite() || !value.attendance_rate.is_finite() {
+                    return Err("period record contains nonfinite numeric value".into());
+                }
+                BufferedRow::Period(value)
+            }
+            _ => return Err(format!("entity/row mismatch: {}", self.entity)),
+        };
+        self.rows.push(buffered);
         self.count += 1;
         if self.rows.len() >= self.limit { self.flush()?; }
         Ok(())
     }
     fn flush(&mut self) -> Result<(), String> {
         if !self.rows.is_empty() {
-            self.writer.write(&batch(&self.schema, &self.columns, &self.rows)?).map_err(|e| e.to_string())?;
+            self.writer.write(&batch(&self.schema, &self.columns, &self.rows, &self.entity)?).map_err(|e| e.to_string())?;
             self.writer.flush().map_err(|e| e.to_string())?;
             self.rows.clear();
         }
@@ -120,10 +171,14 @@ impl Sink {
         }
         Ok(Self { entities })
     }
-    fn emit(&mut self, entity: &str, row: Value) -> Result<(), String> {
+    fn emit(&mut self, row: GeneratedRow) -> Result<(), String> {
+        let entity = match &row {
+            GeneratedRow::Json(entity, _) => *entity,
+            GeneratedRow::Period(_) => "period_records",
+        };
         self.entities.get_mut(entity)
             .ok_or_else(|| format!("unknown entity: {entity}"))?
-            .push(entity, row)
+            .push(row)
     }
     fn close(self) -> Result<BTreeMap<String, usize>, String> {
         let mut counts = BTreeMap::new();
@@ -167,7 +222,7 @@ pub fn generate(
     fs::create_dir(&stage).map_err(|e| e.to_string())?;
     let result = (|| {
         let mut sink = Sink::new(&stage, row_group_rows)?;
-        records::generate_rows(&catalog, cfg, |entity, row| sink.emit(entity, row))?;
+        records::generate_typed_rows(&catalog, cfg, |row| sink.emit(row))?;
         let counts = sink.close()?;
         let subjects: usize = catalog.grades.iter().map(|g| g.subjects.len()).sum();
         let years = catalog.grades.len();
