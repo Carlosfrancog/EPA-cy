@@ -39,8 +39,17 @@
   <% end %>
   <% if @run.models.include?("mlp") %>
     <section class="panel"><h3>MLP · Diagrama da arquitetura</h3>
-    <p class="muted">Esquema de topologia 11 → 32 → 16 → 3. Sem pesos/ativações por época; este relatório não captura esses valores.</p>
+    <p class="muted">Esquema de topologia 11 → 32 → 16 → 3, com conexões representativas para legibilidade. Sem pesos/ativações por época; este relatório não captura esses valores.</p>
     <svg class="native-network" viewBox="0 0 740 535" role="img" aria-label="Topologia da MLP: 11 entradas, 32 e 16 neurônios ocultos, 3 saídas">
+      <% [11,32,16].each_with_index do |count, layer| %>
+        <% next_count = [32,16,3][layer] %>
+        <% count.times do |i| %>
+          <% j = (i * next_count / count.to_f).floor %>
+          <line x1="<%= 85 + layer * 185 %>" y1="<%= 28 + (i + 0.5) * 470.0 / count %>"
+                x2="<%= 85 + (layer + 1) * 185 %>" y2="<%= 28 + (j + 0.5) * 470.0 / next_count %>"
+                stroke="#b4d8d1" stroke-width="1" opacity=".7"/>
+        <% end %>
+      <% end %>
       <% [11,32,16,3].each_with_index do |count, layer| %>
         <% count.times do |i| %><circle cx="<%= 85 + layer * 185 %>" cy="<%= 28 + (i + 0.5) * 470.0 / count %>" r="<%= count == 32 ? 4 : 7 %>" fill="<%= layer == 3 ? "#176f66" : "#76b8ad" %>"/>
         <% end %>
