@@ -426,16 +426,34 @@ for code,(title,objective,body) in CHAPTERS.items():
 (SOURCE/'GLOSSARIO.md').write_text(GLOSSARY,encoding='utf-8')
 
 # A4 SBC-inspired academic layout based on project article v0.2; not official SBC class.
-FONT='/usr/share/fonts/truetype/liberation/LiberationSerif-Regular.ttf'; BOLD='/usr/share/fonts/truetype/liberation/LiberationSerif-Bold.ttf';ITALIC='/usr/share/fonts/truetype/liberation/LiberationSerif-Italic.ttf'
-pdfmetrics.registerFont(TTFont('LibSerif',FONT));pdfmetrics.registerFont(TTFont('LibSerif-Bold',BOLD));pdfmetrics.registerFont(TTFont('LibSerif-Italic',ITALIC));pdfmetrics.registerFontFamily('LibSerif',normal='LibSerif',bold='LibSerif-Bold',italic='LibSerif-Italic',boldItalic='LibSerif-Bold')
+# Fonte serifada compatível com Linux e Windows; sem redistribuir arquivos de fonte.
+import os
+font_sets = [
+    ('/usr/share/fonts/truetype/liberation/LiberationSerif-Regular.ttf',
+     '/usr/share/fonts/truetype/liberation/LiberationSerif-Bold.ttf',
+     '/usr/share/fonts/truetype/liberation/LiberationSerif-Italic.ttf'),
+    (str(Path(os.environ.get('WINDIR', r'C:\Windows')) / 'Fonts' / 'times.ttf'),
+     str(Path(os.environ.get('WINDIR', r'C:\Windows')) / 'Fonts' / 'timesbd.ttf'),
+     str(Path(os.environ.get('WINDIR', r'C:\Windows')) / 'Fonts' / 'timesi.ttf'))
+]
+font_choice = next((fs for fs in font_sets if all(Path(x).is_file() for x in fs)), None)
+if font_choice:
+    for family, path in zip(('LibSerif', 'LibSerif-Bold', 'LibSerif-Italic'), font_choice):
+        pdfmetrics.registerFont(TTFont(family, path))
+    pdfmetrics.registerFontFamily('LibSerif', normal='LibSerif', bold='LibSerif-Bold', italic='LibSerif-Italic', boldItalic='LibSerif-Bold')
+    DEFAULT_FONT = 'LibSerif'
+else:
+    pdfmetrics.registerFontFamily('Times-Roman', normal='Times-Roman', bold='Times-Bold', italic='Times-Italic', boldItalic='Times-BoldItalic')
+    DEFAULT_FONT = 'Times-Roman'
+
 styles={
- 'title':ParagraphStyle('title',fontName='LibSerif-Bold',fontSize=15,leading=18,alignment=TA_CENTER,spaceAfter=12),
- 'meta':ParagraphStyle('meta',fontName='LibSerif',fontSize=9,leading=12,alignment=TA_CENTER,spaceAfter=3),
- 'body':ParagraphStyle('body',fontName='LibSerif',fontSize=10.5,leading=14,alignment=TA_JUSTIFY,spaceAfter=7),
- 'h':ParagraphStyle('h',fontName='LibSerif-Bold',fontSize=12,leading=15,spaceBefore=13,spaceAfter=6,keepWithNext=True),
- 'caption':ParagraphStyle('caption',fontName='LibSerif',fontSize=9,leading=11,alignment=TA_CENTER,spaceAfter=10),
- 'small':ParagraphStyle('small',fontName='LibSerif',fontSize=8.8,leading=11.3,alignment=TA_LEFT,spaceAfter=6),
- 'table':ParagraphStyle('table',fontName='LibSerif',fontSize=9,leading=11),
+ 'title':ParagraphStyle('title',fontName=('LibSerif-Bold' if DEFAULT_FONT == 'LibSerif' else 'Times-Bold'),fontSize=15,leading=18,alignment=TA_CENTER,spaceAfter=12),
+ 'meta':ParagraphStyle('meta',fontName=DEFAULT_FONT,fontSize=9,leading=12,alignment=TA_CENTER,spaceAfter=3),
+ 'body':ParagraphStyle('body',fontName=DEFAULT_FONT,fontSize=10.5,leading=14,alignment=TA_JUSTIFY,spaceAfter=7),
+ 'h':ParagraphStyle('h',fontName=('LibSerif-Bold' if DEFAULT_FONT == 'LibSerif' else 'Times-Bold'),fontSize=12,leading=15,spaceBefore=13,spaceAfter=6,keepWithNext=True),
+ 'caption':ParagraphStyle('caption',fontName=DEFAULT_FONT,fontSize=9,leading=11,alignment=TA_CENTER,spaceAfter=10),
+ 'small':ParagraphStyle('small',fontName=DEFAULT_FONT,fontSize=8.8,leading=11.3,alignment=TA_LEFT,spaceAfter=6),
+ 'table':ParagraphStyle('table',fontName=DEFAULT_FONT,fontSize=9,leading=11),
 }
 
 def inline(s):
@@ -446,7 +464,7 @@ def inline(s):
  return s
 
 def add_page(c,doc):
- w,h=A4;c.setFillColor(colors.HexColor('#56706d'));c.setFont('LibSerif',8.5)
+ w,h=A4;c.setFillColor(colors.HexColor('#56706d'));c.setFont(DEFAULT_FONT,8.5)
  c.drawString(54,h-36,'EDUPREDICT ANALYTICS · CADERNOS CIENTÍFICOS · TGI II')
  c.setStrokeColor(colors.HexColor('#b7cec9'));c.line(54,h-43,w-54,h-43)
  c.setStrokeColor(colors.HexColor('#b7cec9'));c.line(54,45,w-54,45)
