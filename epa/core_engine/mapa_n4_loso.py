@@ -20,7 +20,7 @@ SCHEMA = "epa.mapa.n4.loso_calibration_transfer.v1"
 
 def read_manifest(path: Path) -> list[dict]:
     """Two pseudonymous profiles, all private paths; exact keys and no raw data in output."""
-    spec = json.loads(Path(path).read_text(encoding="utf-8"))
+    spec = json.loads(Path(path).read_text(encoding="utf-8-sig"))
     if set(spec) != {"students"} or not isinstance(spec["students"], list) or len(spec["students"]) != 2:
         raise ValueError("exactly two student profiles required")
     ids = set()
