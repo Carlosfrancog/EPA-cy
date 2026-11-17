@@ -1,6 +1,6 @@
 {
   "schema_version": "epa.research.epic77.evidence_manifest.v1",
-  "status": "READY_FOR_SCIENTIFIC_FREEZE_REVIEW",
+  "status": "FROZEN_SCIENTIFIC_SYNTHETIC_EVIDENCE",
   "dataset_classification": "SYNTHETIC",
   "task": "same_academic_year_final_subject_outcome_3class",
   "cutoffs": [
@@ -186,12 +186,7 @@
     "The supplementary A/B class audits concern the original untuned P0 models and their respective split semantics; P1 per-class recall was not measured.",
     "Frozen results are a bounded synthetic evidence package, not fully code-environment-reproducible provenance; the git reflog only identifies candidate implementation commits."
   ],
-  "gates_before_freeze": [
-    "Human approval/review of this freeze-candidate manifest and scientific limitations.",
-    "Retain original P0/P1 and supplementary reports outside Git with independently verifiable SHA-256.",
-    "Code execution commit is historically unrecorded; preserve as an explicitly disclosed provenance limitation. Do not claim exact code-environment reproduction.",
-    "If exact original revision becomes essential, rerun on a clean pinned checkout under a separately versioned replication protocol (never overwrite the originals)."
-  ],
+  "gates_before_freeze": [],
   "supplementary_evidence": [
     {
       "id": "P0_A_CLASS_AUDIT",
@@ -278,5 +273,24 @@
     },
     "source": "User-supplied git reflog for develop plus GitHub PR merge history",
     "limitation": "Git reflog proves local HEAD transitions, not the HEAD or working tree at each Python experiment invocation; exact original execution commit is unrecorded."
-  }
+  },
+  "freeze_decision": {
+    "approved_by": "research_owner_explicit_approval_in_conversation",
+    "decision_date": "2026-11-17",
+    "scope": "SYNTHETIC_P0_A_B_C_AND_P1_OFFLINE_EVIDENCE_ONLY",
+    "policy": "Freeze the six identified report files by recorded SHA-256. Never overwrite/revise originals; new investigations require distinct versioned artifacts and append-only superseding evidence.",
+    "not_in_scope": [
+      "production_deployment_or_platform_P2",
+      "external_validation_real_school_population",
+      "N4_real_student_ALN1_ALN2",
+      "fully_pinned_historical_execution_revision"
+    ],
+    "provenance_exception": "Original execution HEAD was not logged; GitHub implementation merge SHAs and local reflog identify likely checkout, not definitive execution commit.",
+    "physical_enforcement": "Documented freeze decision; no remote locking of local D: files is performed."
+  },
+  "post_freeze_followups": [
+    "Store immutable copies of six local JSON reports with SHA-256 checks and access controls.",
+    "If full code-revision reproducibility is required, run a new separately versioned replication on pinned clean checkout.",
+    "Continue EPIC 77 operational/P2 independently; new real-population evaluation requires separate protocol."
+  ]
 }
