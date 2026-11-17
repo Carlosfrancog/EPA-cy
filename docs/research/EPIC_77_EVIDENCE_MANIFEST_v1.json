@@ -292,5 +292,17 @@
     "Store immutable copies of six local JSON reports with SHA-256 checks and access controls.",
     "If full code-revision reproducibility is required, run a new separately versioned replication on pinned clean checkout.",
     "Continue EPIC 77 operational/P2 independently; new real-population evaluation requires separate protocol."
-  ]
+  ],
+  "research_scope_clarification": {
+    "project_data_sources": [
+      "GENESIS synthetic datasets",
+      "Authorized real academic histories from two participants, pseudonymized ALN1 and ALN2"
+    ],
+    "research_contains_real_data": true,
+    "real_studies": "N4 retrospective grade regression, longitudinal calibration, and two-student transfer diagnostics, maintained under separate protocols",
+    "current_freeze_scope": "Only synthetic P0 A/B/C and P1 and their class-level audits are frozen by this manifest",
+    "real_evidence_status": "Separate exploratory research stream; not included in this freeze or certified as population validation",
+    "publication_consent": "Researcher reports participant authorization for use in articles and research subject to non-disclosure of identifying information; consent documents and precise permissions not independently inspected.",
+    "confidentiality": "No personal grade rows, answer keys, identifiable academic histories, student names or crosswalks to pseudonyms in this public repository. Report aggregates with reidentification risk assessment."
+  }
 }
