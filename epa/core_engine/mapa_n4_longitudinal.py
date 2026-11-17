@@ -44,8 +44,8 @@ MIN_SCALE = 0.70
 
 
 def normalize_subject(label: str) -> str:
-    s = unicodedata.normalize("NFKD", label.strip().casefold())
-    return " ".join("".join(c for c in s if not unicodedata.combining(c)).split())
+    from epa.core_engine.mapa_n4_subjects import normalize_subject as shared_normalizer
+    return shared_normalizer(label)
 
 
 def read_history(path: Path) -> list[dict]:
