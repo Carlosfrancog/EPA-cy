@@ -159,6 +159,12 @@
       "warning_category": "UserWarning",
       "origin": "sklearn.impute._base",
       "meaning": "columns_5_to_8_all_missing_in_some_test_fixtures"
+    },
+    "class_evaluation": {
+      "P0_A": "PASS_matching_folds_and_scores",
+      "P0_B": "PASS_matching_split_hashes_scores_and_confusion_matrices",
+      "C": "NOT_IDENTIFIABLE_no_unseen_future_students",
+      "P1": "NO_PER_CLASS_METRICS_IN_ORIGINAL_REPORT"
     }
   },
   "environment_reported_by_user": {
@@ -176,13 +182,67 @@
     "Synthetic outcomes cannot validate real-school effectiveness.",
     "Fold/seed standard deviation is descriptive, not population confidence interval.",
     "No class-level recall or confusion matrix in these four reports.",
-    "Individual ALN1/ALN2/N4 data are excluded; their experiments are separate."
+    "Individual ALN1/ALN2/N4 data are excluded; their experiments are separate.",
+    "The supplementary A/B class audits concern the original untuned P0 models and their respective split semantics; P1 per-class recall was not measured."
   ],
   "gates_before_freeze": [
     "Confirm exact execution code revision (not simply audit checkout SHA) or flag as unknown.",
     "Verify dataset manifest artifact bytes and catalog/source hashes in an isolated checkout.",
-    "Class-specific review using appropriate existing CORE engine output, avoiding comparison across incompatible split protocols.",
     "Finalize warning classifications and record precise environment of each report, if independently available.",
     "Keep full reports outside version control; preserve hashes and any missing provenance explicitly."
+  ],
+  "supplementary_evidence": [
+    {
+      "id": "P0_A_CLASS_AUDIT",
+      "filename": "auditoria_classes_A.json",
+      "sha256": "fec371cabdb531c0f3c74ea8eefea5ceba403212c6a75f9bdd8fab4c93e69531",
+      "schema_version": "epa.mapa.research_protocol.v2",
+      "dataset_manifest_sha256": "0e61e8e65efa02d53bd40f13587c61b771f6667f392cc87b9733c59fcee8f4c6",
+      "verification": "all_27_model_fold_macro_f1_values_match_P0_A",
+      "class_order": [
+        "approved",
+        "recovery",
+        "failed"
+      ],
+      "failed_support_per_cutoff": 172,
+      "failed_recall_by_cutoff": {
+        "logistic_regression": [
+          0.5058139534883721,
+          0.6569767441860465,
+          0.7790697674418605
+        ],
+        "random_forest": [
+          0.5290697674418605,
+          0.6453488372093024,
+          0.8197674418604651
+        ]
+      }
+    },
+    {
+      "id": "P0_B_CLASS_AUDIT",
+      "filename": "auditoria_classes_B.json",
+      "sha256": "73c69b8958ebed73117490fbb1587e02ecbaa012930cec0e46a7f6a7a8b3d066",
+      "schema_version": "epa.mapa.protocol_runner.v1",
+      "dataset_manifest_sha256": "0e61e8e65efa02d53bd40f13587c61b771f6667f392cc87b9733c59fcee8f4c6",
+      "verification": "all_split_hashes_f1_accuracy_and_class_counts_match_P0_B",
+      "class_order": [
+        "approved",
+        "recovery",
+        "failed"
+      ],
+      "failed_support_per_cutoff": 45,
+      "failed_recall_by_cutoff": {
+        "logistic_regression": [
+          0.6222222222222222,
+          0.7555555555555555,
+          0.8
+        ],
+        "random_forest": [
+          0.6222222222222222,
+          0.6888888888888889,
+          0.8222222222222222
+        ]
+      }
+    }
   ]
 }
