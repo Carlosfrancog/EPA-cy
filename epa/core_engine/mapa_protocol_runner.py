@@ -15,7 +15,7 @@ from collections import Counter
 from pathlib import Path
 
 import numpy as np
-from sklearn.metrics import accuracy_score, f1_score
+from sklearn.metrics import accuracy_score, confusion_matrix, f1_score, recall_score
 
 from epa.core_engine.mapa import CLASSES, feature_vector, models
 from epa.core_engine.mapa_validation_protocols import plan_splits
@@ -39,7 +39,8 @@ def _rows_for_planning(snapshots: list[dict]) -> list[dict]:
 
 
 def evaluate(snapshots: list[dict], *, cutoff: int, protocol: str, seed: int = 20261029,
-             folds: int = 3, test_year: int | None = None) -> dict:
+             folds: int = 3, test_year: int | None = None,
+             include_class_metrics: bool = False) -> dict:
     if cutoff not in CUTS.values() or not snapshots or any(s.get("cutoff_term") != cutoff for s in snapshots):
         raise ValueError("snapshot cutoff mismatch")
     if any(s.get("data_classification") != "SYNTHETIC" for s in snapshots):
@@ -58,6 +59,9 @@ def evaluate(snapshots: list[dict], *, cutoff: int, protocol: str, seed: int = 2
               "split_reason": split.get("reason"), "folds": [], "models": [],
               "caveat": "This is a new independent protocol; it does not revise frozen MAPA reports. "
                         "Group folds are not independent populations; temporal labels use a conservative annual timestamp."}
+    if include_class_metrics:
+        result["class_metrics_enabled"] = True
+        result["class_order"] = list(CLASSES)
     if split["status"] != "evaluated":
         return result
     x = np.asarray([feature_vector(s) for s in snapshots], dtype=float)
@@ -74,12 +78,19 @@ def evaluate(snapshots: list[dict], *, cutoff: int, protocol: str, seed: int = 2
         for name, classifier in models(seed + index).items():
             classifier.fit(x[train], labels[train])
             pred = classifier.predict(x[test])
-            scores.append({"model": name,
-                           "f1_macro": float(f1_score(labels[test], pred, labels=CLASSES,
-                                                      average="macro", zero_division=0)),
-                           "accuracy": float(accuracy_score(labels[test], pred)),
-                           "train_class_counts": {cls: int(np.sum(labels[train] == cls)) for cls in CLASSES},
-                           "test_class_counts": {cls: int(np.sum(labels[test] == cls)) for cls in CLASSES}})
+            item = {"model": name,
+                    "f1_macro": float(f1_score(labels[test], pred, labels=CLASSES,
+                                               average="macro", zero_division=0)),
+                    "accuracy": float(accuracy_score(labels[test], pred)),
+                    "train_class_counts": {cls: int(np.sum(labels[train] == cls)) for cls in CLASSES},
+                    "test_class_counts": {cls: int(np.sum(labels[test] == cls)) for cls in CLASSES}}
+            if include_class_metrics:
+                item["class_support"] = dict(item["test_class_counts"])
+                item["recall_by_class"] = dict(zip(CLASSES, map(float, recall_score(
+                    labels[test], pred, labels=CLASSES, average=None, zero_division=0))))
+                item["confusion_matrix"] = confusion_matrix(
+                    labels[test], pred, labels=CLASSES).tolist()
+            scores.append(item)
         result["folds"].append({"fold": index + 1, "status": "evaluated",
                                 "train_students": fold["train_students"],
                                 "test_students": fold["test_students"],
@@ -105,16 +116,22 @@ def evaluate(snapshots: list[dict], *, cutoff: int, protocol: str, seed: int = 2
 
 
 def run(dataset: Path, *, protocol: str, seed: int = 20261029,
-        folds: int = 3, test_year: int | None = None) -> dict:
+        folds: int = 3, test_year: int | None = None,
+        include_class_metrics: bool = False) -> dict:
     dataset = Path(dataset)
     data = read_verified_v2(dataset)
-    return {"schema_version": SCHEMA, "dataset_manifest_sha256": hashlib.sha256(
+    report = {"schema_version": SCHEMA, "dataset_manifest_sha256": hashlib.sha256(
                 (dataset / "manifest.json").read_bytes()).hexdigest(),
             "dataset_classification": "SYNTHETIC", "protocol": protocol, "seed": seed,
             "test_year": test_year, "folds_requested": folds,
             "results": [evaluate(build_snapshots(data, cutoff=cut), cutoff=cut,
                                  protocol=protocol, seed=seed, folds=folds,
-                                 test_year=test_year) for cut in CUTS.values()]}
+                                 test_year=test_year,
+                                 include_class_metrics=include_class_metrics) for cut in CUTS.values()]}
+    if include_class_metrics:
+        report["class_metrics_enabled"] = True
+        report["class_order"] = list(CLASSES)
+    return report
 
 
 def main() -> None:
@@ -126,11 +143,14 @@ def main() -> None:
     p.add_argument("--folds", type=int, default=3)
     p.add_argument("--seed", type=int, default=20261029)
     p.add_argument("--report", required=True, type=Path)
+    p.add_argument("--class-metrics", action="store_true",
+                   help="Add class support, recall and confusion matrices without changing split/model metrics")
     args = p.parse_args()
     if args.report.exists() or args.report.is_symlink():
         p.error("report exists: immutable output cannot be overwritten")
     report = run(args.dataset, protocol=args.protocol, test_year=args.test_year,
-                 folds=args.folds, seed=args.seed)
+                 folds=args.folds, seed=args.seed,
+                 include_class_metrics=args.class_metrics)
     args.report.parent.mkdir(parents=True, exist_ok=True)
     with args.report.open("x", encoding="utf-8") as f:
         json.dump(report, f, ensure_ascii=False, indent=2)
