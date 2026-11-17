@@ -1,0 +1,188 @@
+{
+  "schema_version": "epa.research.epic77.evidence_manifest.v1",
+  "status": "PROVISIONAL_NOT_FROZEN",
+  "dataset_classification": "SYNTHETIC",
+  "task": "same_academic_year_final_subject_outcome_3class",
+  "cutoffs": [
+    "N1",
+    "N2",
+    "N3"
+  ],
+  "dataset_manifest_sha256": "0e61e8e65efa02d53bd40f13587c61b771f6667f392cc87b9733c59fcee8f4c6",
+  "artifacts": [
+    {
+      "id": "P0_A",
+      "filename": "protocolo_A.json",
+      "sha256": "4e226f97f8bdd1c62e2ff15cdd715eb63a52a89a0e3833fba578d709d427a21a",
+      "schema_version": "epa.mapa.protocol_runner.v1",
+      "protocol": "A_grouped",
+      "seed": 20261029,
+      "folds": 3
+    },
+    {
+      "id": "P0_B",
+      "filename": "protocolo_B.json",
+      "sha256": "6c9417adb5241e15cfe00e867b031d15276abe7d16cf4a809d1edf286843733d",
+      "schema_version": "epa.mapa.protocol_runner.v1",
+      "protocol": "B_out_of_time",
+      "seed": 20261029,
+      "test_year": 2026,
+      "training_years": [
+        2020,
+        2021,
+        2022,
+        2023,
+        2024
+      ],
+      "temporal_label_availability": "conservative_year_plus_2"
+    },
+    {
+      "id": "P0_C",
+      "filename": "protocolo_C.json",
+      "sha256": "78bed26bc0fc209fbaa4d662d1880c3b6d6b463c5e08f0aa4779bdaf705efd08",
+      "schema_version": "epa.mapa.protocol_runner.v1",
+      "protocol": "C_unseen_future",
+      "seed": 20261029,
+      "test_year": 2026,
+      "status": "not_identifiable",
+      "reason": "no_unseen_future_students"
+    },
+    {
+      "id": "P1",
+      "filename": "robustez_P1_v1.json",
+      "sha256": "db2fe6d7ab6b920cd69489cb7dac5ed0722083701b8286dbe991476c7c3ec8c3",
+      "schema_version": "epa.mapa.robustness.v1",
+      "protocol": "nested_student_grouped_holdout_not_temporal",
+      "seeds": [
+        20261029,
+        20261030,
+        20261031
+      ],
+      "inner_folds": 3,
+      "train_students": 30,
+      "test_students": 10
+    }
+  ],
+  "f1_macro_by_cutoff": {
+    "A": {
+      "status": [
+        "evaluated",
+        "evaluated",
+        "evaluated"
+      ],
+      "majority": [
+        0.19149106560201454,
+        0.19149106560201454,
+        0.19149106560201454
+      ],
+      "logistic_regression": [
+        0.7554048920660595,
+        0.8249422987818638,
+        0.8913662041352094
+      ],
+      "random_forest": [
+        0.74902725240856,
+        0.8214367218362509,
+        0.8985873431150616
+      ]
+    },
+    "B": {
+      "status": [
+        "evaluated",
+        "evaluated",
+        "evaluated"
+      ],
+      "majority": [
+        0.2258953168044077,
+        0.2258953168044077,
+        0.2258953168044077
+      ],
+      "logistic_regression": [
+        0.7625385247037997,
+        0.8517447816621847,
+        0.8914207783377285
+      ],
+      "random_forest": [
+        0.7699920903515256,
+        0.8262740408627991,
+        0.9041236680968711
+      ]
+    },
+    "C": {
+      "status": [
+        "not_identifiable",
+        "not_identifiable",
+        "not_identifiable"
+      ],
+      "reason": "no_unseen_future_students"
+    },
+    "P1": {
+      "status": [
+        "evaluated",
+        "evaluated",
+        "evaluated"
+      ],
+      "majority": [
+        0.23430097882652626,
+        0.23430097882652626,
+        0.23430097882652626
+      ],
+      "logistic_regression": [
+        0.7257916773879218,
+        0.7748190896979045,
+        0.8489955111187032
+      ],
+      "random_forest": [
+        0.7195931690235624,
+        0.7560868668419894,
+        0.8700299817685733
+      ],
+      "train_test_gap_logistic_regression": [
+        0.06829179643073842,
+        0.07805134531113293,
+        0.05593203775599557
+      ],
+      "train_test_gap_random_forest": [
+        0.19466085180010315,
+        0.1365619550780688,
+        0.09248712814239697
+      ]
+    }
+  },
+  "verification": {
+    "sha256_of_uploaded_files": "matched_local_user_hash_listing",
+    "reported_dataset_manifest_digest": "same_in_all_four_jsons",
+    "aggregated_means": "recomputed_for_P0_A_P0_B_P1_no_mismatch",
+    "pytest_selected": {
+      "passed": 17,
+      "warnings": 32,
+      "warning_category": "UserWarning",
+      "origin": "sklearn.impute._base",
+      "meaning": "columns_5_to_8_all_missing_in_some_test_fixtures"
+    }
+  },
+  "environment_reported_by_user": {
+    "python": "3.13.3",
+    "numpy": "2.4.4",
+    "scikit_learn": "1.8.0",
+    "checkout_head_at_audit": "8cdc019e36d54c981cfc5344f5a5851d8fabcfc2",
+    "note": "Audit checkout commit is NOT asserted to be the execution commit; working tree was dirty."
+  },
+  "scientific_limits": [
+    "P0_A grouped CV is not temporal validation.",
+    "P0_B tests year 2026 using prior eligible labels, but all 40 student IDs overlap with training; not independent future cohorts.",
+    "P0_C could not evaluate independent future students; do not impute metrics.",
+    "P1 nested random student-grouped holdout differs from P0_A and P0_B; no direct causal comparison.",
+    "Synthetic outcomes cannot validate real-school effectiveness.",
+    "Fold/seed standard deviation is descriptive, not population confidence interval.",
+    "No class-level recall or confusion matrix in these four reports.",
+    "Individual ALN1/ALN2/N4 data are excluded; their experiments are separate."
+  ],
+  "gates_before_freeze": [
+    "Confirm exact execution code revision (not simply audit checkout SHA) or flag as unknown.",
+    "Verify dataset manifest artifact bytes and catalog/source hashes in an isolated checkout.",
+    "Class-specific review using appropriate existing CORE engine output, avoiding comparison across incompatible split protocols.",
+    "Finalize warning classifications and record precise environment of each report, if independently available.",
+    "Keep full reports outside version control; preserve hashes and any missing provenance explicitly."
+  ]
+}
