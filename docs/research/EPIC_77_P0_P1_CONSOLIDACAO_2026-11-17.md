@@ -1,6 +1,6 @@
-# EPIC #77 — Manifesto de evidências P0/A-B-C e P1 (provisório)
+# EPIC #77 — Evidências P0/A-B-C e P1 (candidato a congelamento)
 
-**Estado:** PROVISIONAL_NOT_FROZEN. Registro derivado dos quatro JSONs enviados pelo pesquisador, comparados bit a bit com os hashes da listagem local. Não modifica treinamento, relatórios, CODE ou N4.
+**Estado:** READY_FOR_SCIENTIFIC_FREEZE_REVIEW. Registro derivado dos quatro JSONs enviados pelo pesquisador, comparados bit a bit com os hashes da listagem local. Não modifica treinamento, relatórios, CODE ou N4.
 
 **Dataset:** GENESIS `SYNTHETIC`, SHA-256 declarado do `manifest.json`: `0e61e8e65efa02d53bd40f13587c61b771f6667f392cc87b9733c59fcee8f4c6`. Os quatro arquivos apontam para esse mesmo manifesto; seu conteúdo completo (artefatos Parquet e catálogo) não foi revalidado aqui.
 
@@ -31,12 +31,18 @@ As médias agregadas foram conferidas contra os valores por fold/seed disponíve
 - P0/B usa treino 2020–2024 e teste em 2026, 40 alunos em ambas as partições, com sobreposição integral de identificadores. Não é protocolo C.
 - P1: o gap de Macro-F1 treino–teste da Random Forest (0,1947 / 0,1366 / 0,0925) excede o da Logística (0,0683 / 0,0781 / 0,0559). É indicador descritivo, não diagnóstico causal conclusivo.
 
-## Gates faltantes antes do freeze
+## Auditoria de integridade e proveniência final
 
-1. Rastrear commit exato da execução, ou registrar explicitamente que é desconhecido; revisar versões por artefato.
-2. Conferir a integridade dos artefatos físicos e o catálogo GENESIS contra o `manifest.json` original.
-3. Revisão de classes P0/A e P0/B concluída com relatórios suplementares íntegros; não transportar os resultados para o P1 aninhado.
-4. Preservar relatórios originais com hashes e registrar limitações metodológicas e warnings no parecer final.
+- O usuário executou `read_verified_v2()` em `D:\EPA-Experimentos\genesis-epic77-v2`, recebendo `STATUS: PASS`: cinco SHA-256 de Parquets, contagens (40, 42, 280, 324, 8.640) e validação estrutural aprovados. Essa evidência é um resultado de execução local relatado; não equivale a revalidação independente na máquina remota.
+- O SHA-256 de `examples/atlas.demo.json` foi confirmado localmente: `22457cc65857d43a33726e06380bc58dfb64b6e802b89c393c43cbf03bfa0ab1`.
+- GitHub: o avaliador P0/A/B/C entrou na `develop` em `69ae730af076110708ea18aa5c3df5aae94c27f3` (PR #82). O P1 entrou em `3257208d6034679ff57151f4117c3a745f78c038` (PR #83).
+- Reflog local: atualização para P0 às 02:08:35 -03:00 e para P1 às 02:40:50 -03:00 em 17/11/2026; documentação posterior `8cdc019` às 03:12:34. **O reflog não registra o commit exato em cada execução Python.** São candidatos de execução, não proveniência original definitivamente comprovada.
+- A avaliação por classe P0/A e P0/B reproduziu os scores originais. O P0/C segue `not_identifiable`; o P1 não contém recall por classe. O ambiente Python/scikit-learn informado foi consultado na auditoria posterior, não necessariamente na execução inicial.
+
+## Condição para congelamento
+
+**Pacote pronto para revisão de congelamento científico sintético**, não para afirmar validade educacional externa, certificação P2 ou reprodução integral byte a byte do ambiente de execução histórico. A decisão de freeze deve registrar explicitamente que a revisão exata original é desconhecida, preservar os seis relatórios íntegros fora do Git e impedir alterações retroativas nos resultados. Se for requerida prova da revisão exata, executar replicação nova em checkout limpo e commit fixado com relatório separado.
+
 
 O manifesto estruturado está em `docs/research/EPIC_77_EVIDENCE_MANIFEST_v1.json`. A EPIC operacional/P2 não está encerrada e nenhuma evidência de alunos reais integra este pacote.
 
@@ -58,4 +64,4 @@ O manifesto estruturado está em `docs/research/EPIC_77_EVIDENCE_MANIFEST_v1.jso
 
 Os 45 registros de reprovação do protocolo B em 2026 são registros disciplina/ano, não estudantes independentes. Nesse teste sintético, os casos de reprovação não identificados foram classificados como `recovery`, não `approved`. Isso não estabelece uma propriedade garantida do sistema em população real. O controle A não é equivalente ao temporal B, nem qualquer um deles ao P1 aninhado.
 
-**Porta desempenho por classe P0/A+B: verificada.** Restam a integridade completa dos artefatos GENESIS e a proveniência precisa (ou registro de desconhecimento) do commit de execução para o congelamento. Nenhuma métrica P1 por classe foi inferida.
+**Porta desempenho por classe P0/A+B: verificada.** Integridade do GENESIS e do catálogo foi confirmada por execução local do usuário; a revisão exata original não foi registrada e permanece limitação explícita. Nenhuma métrica P1 por classe foi inferida.
