@@ -49,11 +49,11 @@ PUBLIC_MODELS = ("baseline_n3", "baseline_mean", "dummy_mean", "linear", "ridge"
 
 
 def canonical_subject(value: str) -> tuple[str, str]:
-    import unicodedata
-    normalized = unicodedata.normalize("NFC", value.strip()).casefold()
-    if normalized not in SUBJECT_ALIASES:
+    from epa.core_engine.mapa_n4_subjects import normalize_subject, ALIASES
+    normalized = normalize_subject(value)
+    if normalized not in ALIASES:
         raise ValueError("Unrecognized school subject; update vetted alias mapping")
-    return SUBJECT_ALIASES[normalized]
+    return ALIASES[normalized]
 
 
 def features(*, n1: float, n2: float, n3: float, grade_level: int, subject_id: str, area: str) -> dict:
