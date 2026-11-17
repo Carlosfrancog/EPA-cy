@@ -1,6 +1,6 @@
-# EPIC #77 — Evidências P0/A-B-C e P1 (candidato a congelamento)
+# EPIC #77 — Evidências P0/A-B-C e P1 (congelamento científico formalizado)
 
-**Estado:** READY_FOR_SCIENTIFIC_FREEZE_REVIEW. Registro derivado dos quatro JSONs enviados pelo pesquisador, comparados bit a bit com os hashes da listagem local. Não modifica treinamento, relatórios, CODE ou N4.
+**Estado:** FROZEN_SCIENTIFIC_SYNTHETIC_EVIDENCE (decisão explícita do responsável em 17/11/2026). Registro derivado dos quatro JSONs enviados pelo pesquisador, comparados bit a bit com os hashes da listagem local. Não modifica treinamento, relatórios, CODE ou N4.
 
 **Dataset:** GENESIS `SYNTHETIC`, SHA-256 declarado do `manifest.json`: `0e61e8e65efa02d53bd40f13587c61b771f6667f392cc87b9733c59fcee8f4c6`. Os quatro arquivos apontam para esse mesmo manifesto; seu conteúdo completo (artefatos Parquet e catálogo) não foi revalidado aqui.
 
@@ -41,7 +41,7 @@ As médias agregadas foram conferidas contra os valores por fold/seed disponíve
 
 ## Condição para congelamento
 
-**Pacote pronto para revisão de congelamento científico sintético**, não para afirmar validade educacional externa, certificação P2 ou reprodução integral byte a byte do ambiente de execução histórico. A decisão de freeze deve registrar explicitamente que a revisão exata original é desconhecida, preservar os seis relatórios íntegros fora do Git e impedir alterações retroativas nos resultados. Se for requerida prova da revisão exata, executar replicação nova em checkout limpo e commit fixado com relatório separado.
+**Pacote congelado como evidência científica sintética de escopo delimitado**, não para afirmar validade educacional externa, certificação P2 ou reprodução integral byte a byte do ambiente de execução histórico. A decisão de freeze deve registrar explicitamente que a revisão exata original é desconhecida, preservar os seis relatórios íntegros fora do Git e impedir alterações retroativas nos resultados. Se for requerida prova da revisão exata, executar replicação nova em checkout limpo e commit fixado com relatório separado.
 
 
 O manifesto estruturado está em `docs/research/EPIC_77_EVIDENCE_MANIFEST_v1.json`. A EPIC operacional/P2 não está encerrada e nenhuma evidência de alunos reais integra este pacote.
@@ -65,3 +65,13 @@ O manifesto estruturado está em `docs/research/EPIC_77_EVIDENCE_MANIFEST_v1.jso
 Os 45 registros de reprovação do protocolo B em 2026 são registros disciplina/ano, não estudantes independentes. Nesse teste sintético, os casos de reprovação não identificados foram classificados como `recovery`, não `approved`. Isso não estabelece uma propriedade garantida do sistema em população real. O controle A não é equivalente ao temporal B, nem qualquer um deles ao P1 aninhado.
 
 **Porta desempenho por classe P0/A+B: verificada.** Integridade do GENESIS e do catálogo foi confirmada por execução local do usuário; a revisão exata original não foi registrada e permanece limitação explícita. Nenhuma métrica P1 por classe foi inferida.
+
+## Deliberação formal de congelamento — 17/11/2026
+
+**Decisão:** o responsável pela pesquisa autorizou expressamente congelar o pacote científico sintético P0/A, P0/B, P0/C (não identificável) e P1, junto dos relatórios de auditoria por classe A/B. Os hashes dos seis arquivos constituem suas identidades; nenhuma revisão retroativa é permitida. Novas execuções exigem nome, versão, hash e parecer separados.
+
+**Exceção documentada:** não existe log inequívoco de `git rev-parse HEAD` no instante exato das execuções originais. Os commits de integração P0 (`69ae730`) e P1 (`3257208`) são comprovados pelo GitHub e os pulls locais pelo reflog, mas não constituem prova integral de proveniência do processo original.
+
+**Validade científica:** apenas engenharia experimental e resultados sintéticos, sem inferência populacional, sem prova de generalização para coortes futuras independentes, sem promoção de modelos à produção. O P0/C permanece `not_identifiable`; o P1 não dispõe de recall individual por classe. Dados N4/ALN1/ALN2 não fazem parte deste congelamento. A EPIC operacional/P2 segue independente.
+
+**Limite de execução:** esta decisão congela o registro científico e os identificadores SHA-256; não aplica permissões de arquivo, WORM ou travas físicas aos arquivos locais Windows. Preserve cópias de leitura e verifique periodicamente os hashes.
