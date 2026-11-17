@@ -1,6 +1,6 @@
 {
   "schema_version": "epa.research.epic77.evidence_manifest.v1",
-  "status": "PROVISIONAL_NOT_FROZEN",
+  "status": "FROZEN_SCIENTIFIC_SYNTHETIC_EVIDENCE",
   "dataset_classification": "SYNTHETIC",
   "task": "same_academic_year_final_subject_outcome_3class",
   "cutoffs": [
@@ -183,14 +183,10 @@
     "Fold/seed standard deviation is descriptive, not population confidence interval.",
     "No class-level recall or confusion matrix in these four reports.",
     "Individual ALN1/ALN2/N4 data are excluded; their experiments are separate.",
-    "The supplementary A/B class audits concern the original untuned P0 models and their respective split semantics; P1 per-class recall was not measured."
+    "The supplementary A/B class audits concern the original untuned P0 models and their respective split semantics; P1 per-class recall was not measured.",
+    "Frozen results are a bounded synthetic evidence package, not fully code-environment-reproducible provenance; the git reflog only identifies candidate implementation commits."
   ],
-  "gates_before_freeze": [
-    "Confirm exact execution code revision (not simply audit checkout SHA) or flag as unknown.",
-    "Verify dataset manifest artifact bytes and catalog/source hashes in an isolated checkout.",
-    "Finalize warning classifications and record precise environment of each report, if independently available.",
-    "Keep full reports outside version control; preserve hashes and any missing provenance explicitly."
-  ],
+  "gates_before_freeze": [],
   "supplementary_evidence": [
     {
       "id": "P0_A_CLASS_AUDIT",
@@ -244,5 +240,57 @@
         ]
       }
     }
+  ],
+  "dataset_integrity": {
+    "reported_validation": "PASS via epa.core_engine.student_timeline.read_verified_v2",
+    "expected_verified_row_counts": {
+      "students": 40,
+      "classes": 42,
+      "enrollments": 280,
+      "subject_offerings": 324,
+      "period_records": 8640
+    },
+    "catalog_sha256": "22457cc65857d43a33726e06380bc58dfb64b6e802b89c393c43cbf03bfa0ab1",
+    "catalog_path": "examples/atlas.demo.json",
+    "catalog_local_hash_verified": true,
+    "hash_verification_scope": "User-reported local SHA-256 and CORE validation; no independent access to their Windows filesystem."
+  },
+  "code_provenance": {
+    "classification": "IMPLEMENTATION_COMMITS_CONFIRMED_EXECUTION_COMMITS_NOT_PROVEN",
+    "P0": {
+      "implementation_merge_sha": "69ae730af076110708ea18aa5c3df5aae94c27f3",
+      "local_checkout_updated_at": "2026-11-17T02:08:35-03:00",
+      "candidate_execution_sha": "69ae730af076110708ea18aa5c3df5aae94c27f3"
+    },
+    "P1": {
+      "implementation_merge_sha": "3257208d6034679ff57151f4117c3a745f78c038",
+      "local_checkout_updated_at": "2026-11-17T02:40:50-03:00",
+      "candidate_execution_sha": "3257208d6034679ff57151f4117c3a745f78c038"
+    },
+    "later_audit": {
+      "commit": "8cdc019e36d54c981cfc5344f5a5851d8fabcfc2",
+      "local_checkout_updated_at": "2026-11-17T03:12:34-03:00"
+    },
+    "source": "User-supplied git reflog for develop plus GitHub PR merge history",
+    "limitation": "Git reflog proves local HEAD transitions, not the HEAD or working tree at each Python experiment invocation; exact original execution commit is unrecorded."
+  },
+  "freeze_decision": {
+    "approved_by": "research_owner_explicit_approval_in_conversation",
+    "decision_date": "2026-11-17",
+    "scope": "SYNTHETIC_P0_A_B_C_AND_P1_OFFLINE_EVIDENCE_ONLY",
+    "policy": "Freeze the six identified report files by recorded SHA-256. Never overwrite/revise originals; new investigations require distinct versioned artifacts and append-only superseding evidence.",
+    "not_in_scope": [
+      "production_deployment_or_platform_P2",
+      "external_validation_real_school_population",
+      "N4_real_student_ALN1_ALN2",
+      "fully_pinned_historical_execution_revision"
+    ],
+    "provenance_exception": "Original execution HEAD was not logged; GitHub implementation merge SHAs and local reflog identify likely checkout, not definitive execution commit.",
+    "physical_enforcement": "Documented freeze decision; no remote locking of local D: files is performed."
+  },
+  "post_freeze_followups": [
+    "Store immutable copies of six local JSON reports with SHA-256 checks and access controls.",
+    "If full code-revision reproducibility is required, run a new separately versioned replication on pinned clean checkout.",
+    "Continue EPIC 77 operational/P2 independently; new real-population evaluation requires separate protocol."
   ]
 }
