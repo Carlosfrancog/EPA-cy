@@ -75,3 +75,11 @@ Os 45 registros de reprovação do protocolo B em 2026 são registros disciplina
 **Validade científica:** apenas engenharia experimental e resultados sintéticos, sem inferência populacional, sem prova de generalização para coortes futuras independentes, sem promoção de modelos à produção. O P0/C permanece `not_identifiable`; o P1 não dispõe de recall individual por classe. Dados N4/ALN1/ALN2 não fazem parte deste congelamento. A EPIC operacional/P2 segue independente.
 
 **Limite de execução:** esta decisão congela o registro científico e os identificadores SHA-256; não aplica permissões de arquivo, WORM ou travas físicas aos arquivos locais Windows. Preserve cópias de leitura e verifique periodicamente os hashes.
+
+## Delimitação importante: pesquisa com participantes reais
+
+O **EduPredict como projeto de pesquisa não é exclusivamente sintético**. Existe uma frente empírica retrospectiva separada com dados acadêmicos reais de **dois estudantes**, identificados apenas como `ALN1` e `ALN2` nos protocolos: previsão de N4, calibração com históricos anteriores a 2020 e diagnóstico de transferência por estudante. Ver `MAPA_REAL_N4_BENCHMARK.md`, `MAPA_N4_CALIBRACAO_LONGITUDINAL_EXPLORATORIA.md` e `MAPA_N4_LOSO_DOIS_ESTUDANTES.md`.
+
+**Limite deste congelamento:** apenas o pacote experimental sintético P0/A/B/C e P1 e auditorias por classe A/B. O status `FROZEN_SCIENTIFIC_SYNTHETIC_EVIDENCE` **não** significa que os estudos reais inexistem, nem os congela, nem comprova validade populacional. Resultados reais são evidências exploratórias distintas, com protocolos e limitações próprios.
+
+O responsável informou autorização dos participantes para utilização dos dados em artigos e pesquisa **desde que não sejam expostos**. O teor documental da autorização não foi verificado neste parecer. Não publicar históricos, linhas individuais de notas, chaves de respostas, identificadores pessoais ou combinações potencialmente reidentificáveis no GitHub público. Para o artigo, empregar métodos, métricas agregadas e identificação pseudonimizada com avaliação do risco de reidentificação e observância do consentimento.
