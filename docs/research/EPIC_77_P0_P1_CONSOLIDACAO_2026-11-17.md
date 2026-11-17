@@ -35,7 +35,27 @@ As médias agregadas foram conferidas contra os valores por fold/seed disponíve
 
 1. Rastrear commit exato da execução, ou registrar explicitamente que é desconhecido; revisar versões por artefato.
 2. Conferir a integridade dos artefatos físicos e o catálogo GENESIS contra o `manifest.json` original.
-3. Verificar suporte e recall por classe em resultados do CORE apropriados, sem extrapolar esse diagnóstico para splits diferentes.
+3. Revisão de classes P0/A e P0/B concluída com relatórios suplementares íntegros; não transportar os resultados para o P1 aninhado.
 4. Preservar relatórios originais com hashes e registrar limitações metodológicas e warnings no parecer final.
 
 O manifesto estruturado está em `docs/research/EPIC_77_EVIDENCE_MANIFEST_v1.json`. A EPIC operacional/P2 não está encerrada e nenhuma evidência de alunos reais integra este pacote.
+
+## Fechamento da auditoria por classe — evidências suplementares
+
+| Relatório privado | SHA-256 | Reprodução |
+|---|---|---|
+| `auditoria_classes_A.json` | `fec371cabdb531c0f3c74ea8eefea5ceba403212c6a75f9bdd8fab4c93e69531` | 27 valores de Macro-F1 por modelo/fold iguais ao P0/A |
+| `auditoria_classes_B.json` | `73c69b8958ebed73117490fbb1587e02ecbaa012930cec0e46a7f6a7a8b3d066` | hashes dos splits, acurácia, Macro-F1 e contagens iguais ao P0/B |
+
+### Recall `failed` (Reprovação)
+
+| Protocolo | Modelo | N1 | N2 | N3 |
+|---|---|---|---|---|
+| P0/A agrupado (172 por corte) | LR | 87/172 (50,58%) | 113/172 (65,70%) | 134/172 (77,91%) |
+| P0/A agrupado (172 por corte) | RF | 91/172 (52,91%) | 111/172 (64,53%) | 141/172 (81,98%) |
+| P0/B temporal (45 por corte) | LR | 28/45 (62,22%) | 34/45 (75,56%) | 36/45 (80,00%) |
+| P0/B temporal (45 por corte) | RF | 28/45 (62,22%) | 31/45 (68,89%) | 37/45 (82,22%) |
+
+Os 45 registros de reprovação do protocolo B em 2026 são registros disciplina/ano, não estudantes independentes. Nesse teste sintético, os casos de reprovação não identificados foram classificados como `recovery`, não `approved`. Isso não estabelece uma propriedade garantida do sistema em população real. O controle A não é equivalente ao temporal B, nem qualquer um deles ao P1 aninhado.
+
+**Porta desempenho por classe P0/A+B: verificada.** Restam a integridade completa dos artefatos GENESIS e a proveniência precisa (ou registro de desconhecimento) do commit de execução para o congelamento. Nenhuma métrica P1 por classe foi inferida.
