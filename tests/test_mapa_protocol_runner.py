@@ -80,3 +80,37 @@ def test_planner_does_not_treat_unlabeled_prior_student_as_new():
           {"student_id":"SYNOLD", "academic_year":2022,"label_available_year":2022,
            "data_classification":"SYNTHETIC"}]
     assert plan_splits(rows,protocol="C_unseen_future",test_year=2022)["status"]=="not_identifiable"
+
+def test_optional_class_metrics_preserve_b_f1_and_temporal_partition():
+    from epa.core_engine.mapa import CLASSES
+    import numpy as np
+
+    rows = synthetic_snapshots()
+    old = evaluate(rows, cutoff=3, protocol="B_out_of_time", test_year=2022, seed=12)
+    new = evaluate(rows, cutoff=3, protocol="B_out_of_time", test_year=2022,
+                   seed=12, include_class_metrics=True)
+    assert new["class_order"] == list(CLASSES)
+    assert new["folds"][0]["train_indices_sha256"] == old["folds"][0]["train_indices_sha256"]
+    assert new["folds"][0]["test_indices_sha256"] == old["folds"][0]["test_indices_sha256"]
+    assert new["folds"][0]["train_years"] == [2020]
+    assert new["folds"][0]["test_years"] == [2022]
+    assert new["models"] == old["models"]
+    assert "class_metrics_enabled" not in old
+    for previous, current in zip(old["folds"][0]["model_scores"], new["folds"][0]["model_scores"]):
+        assert previous["f1_macro"] == current["f1_macro"]
+        assert previous["accuracy"] == current["accuracy"]
+        assert set(current["recall_by_class"]) == set(CLASSES)
+        cm = np.asarray(current["confusion_matrix"])
+        assert cm.shape == (3, 3)
+        assert cm.sum() == sum(current["class_support"].values())
+        assert cm.sum(axis=1).tolist() == [current["class_support"][c] for c in CLASSES]
+        assert np.allclose(np.diag(cm) / np.maximum(cm.sum(axis=1), 1),
+                           [current["recall_by_class"][c] for c in CLASSES])
+
+
+def test_optional_class_metrics_respect_protocol_c_not_identifiable():
+    report = evaluate(synthetic_snapshots(), cutoff=3, protocol="C_unseen_future",
+                      test_year=2022, include_class_metrics=True)
+    assert report["status"] == "not_identifiable"
+    assert report["folds"] == [] and report["models"] == []
+    assert report["class_metrics_enabled"] is True
