@@ -37,6 +37,29 @@ def test_manifest_requires_exactly_two_distinct_aliases_and_existing_files(tmp_p
         loso.read_manifest(spec)
 
 
+
+def test_manifest_accepts_utf8_bom_from_windows_powershell(tmp_path):
+    profiles = []
+    for name in ("ALN1", "ALN2"):
+        sources = []
+        for kind in ("inputs", "calibration_history", "answer_key"):
+            source = tmp_path / f"{name}-{kind}.csv"
+            source.write_text("synthetic fixture only", encoding="utf-8")
+            sources.append(str(source))
+        profiles.append({
+            "student": name,
+            "inputs": sources[0],
+            "calibration_history": sources[1],
+            "answer_key": sources[2],
+        })
+    manifest = tmp_path / "dois_alunos.json"
+    content = json.dumps({"students": profiles}, ensure_ascii=False)
+    manifest.write_text(content, encoding="utf-8-sig")
+    loaded = loso.read_manifest(manifest)
+    assert [p["student"] for p in loaded] == ["ALN1", "ALN2"]
+    manifest.write_text(content, encoding="utf-8")
+    assert [p["student"] for p in loso.read_manifest(manifest)] == ["ALN1", "ALN2"]
+
 def test_transferred_profile_never_uses_held_out_student(monkeypatch):
     from epa.core_engine.mapa_real_n4 import features
     from epa.core_engine.mapa_n4_longitudinal import AREAS
