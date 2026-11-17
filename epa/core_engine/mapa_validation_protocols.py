@@ -97,7 +97,7 @@ def plan_splits(rows: list[dict], *, protocol: str,
     train = np.flatnonzero((years < test_year) & (available < test_year))
     test = np.flatnonzero(years == test_year)
     if protocol == "C_unseen_future":
-        prior = set(ids[train])
+        prior = set(ids[years < test_year])  # prior observation, even if its label cannot enter training
         test = np.asarray([i for i in test if ids[i] not in prior], dtype=int)
     if not len(train) or not len(test):
         result.update(status="not_identifiable", reason=(
