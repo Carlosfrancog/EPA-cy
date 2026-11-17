@@ -1,6 +1,6 @@
 {
   "schema_version": "epa.research.epic77.evidence_manifest.v1",
-  "status": "PROVISIONAL_NOT_FROZEN",
+  "status": "READY_FOR_SCIENTIFIC_FREEZE_REVIEW",
   "dataset_classification": "SYNTHETIC",
   "task": "same_academic_year_final_subject_outcome_3class",
   "cutoffs": [
@@ -183,13 +183,14 @@
     "Fold/seed standard deviation is descriptive, not population confidence interval.",
     "No class-level recall or confusion matrix in these four reports.",
     "Individual ALN1/ALN2/N4 data are excluded; their experiments are separate.",
-    "The supplementary A/B class audits concern the original untuned P0 models and their respective split semantics; P1 per-class recall was not measured."
+    "The supplementary A/B class audits concern the original untuned P0 models and their respective split semantics; P1 per-class recall was not measured.",
+    "Frozen results are a bounded synthetic evidence package, not fully code-environment-reproducible provenance; the git reflog only identifies candidate implementation commits."
   ],
   "gates_before_freeze": [
-    "Confirm exact execution code revision (not simply audit checkout SHA) or flag as unknown.",
-    "Verify dataset manifest artifact bytes and catalog/source hashes in an isolated checkout.",
-    "Finalize warning classifications and record precise environment of each report, if independently available.",
-    "Keep full reports outside version control; preserve hashes and any missing provenance explicitly."
+    "Human approval/review of this freeze-candidate manifest and scientific limitations.",
+    "Retain original P0/P1 and supplementary reports outside Git with independently verifiable SHA-256.",
+    "Code execution commit is historically unrecorded; preserve as an explicitly disclosed provenance limitation. Do not claim exact code-environment reproduction.",
+    "If exact original revision becomes essential, rerun on a clean pinned checkout under a separately versioned replication protocol (never overwrite the originals)."
   ],
   "supplementary_evidence": [
     {
@@ -244,5 +245,38 @@
         ]
       }
     }
-  ]
+  ],
+  "dataset_integrity": {
+    "reported_validation": "PASS via epa.core_engine.student_timeline.read_verified_v2",
+    "expected_verified_row_counts": {
+      "students": 40,
+      "classes": 42,
+      "enrollments": 280,
+      "subject_offerings": 324,
+      "period_records": 8640
+    },
+    "catalog_sha256": "22457cc65857d43a33726e06380bc58dfb64b6e802b89c393c43cbf03bfa0ab1",
+    "catalog_path": "examples/atlas.demo.json",
+    "catalog_local_hash_verified": true,
+    "hash_verification_scope": "User-reported local SHA-256 and CORE validation; no independent access to their Windows filesystem."
+  },
+  "code_provenance": {
+    "classification": "IMPLEMENTATION_COMMITS_CONFIRMED_EXECUTION_COMMITS_NOT_PROVEN",
+    "P0": {
+      "implementation_merge_sha": "69ae730af076110708ea18aa5c3df5aae94c27f3",
+      "local_checkout_updated_at": "2026-11-17T02:08:35-03:00",
+      "candidate_execution_sha": "69ae730af076110708ea18aa5c3df5aae94c27f3"
+    },
+    "P1": {
+      "implementation_merge_sha": "3257208d6034679ff57151f4117c3a745f78c038",
+      "local_checkout_updated_at": "2026-11-17T02:40:50-03:00",
+      "candidate_execution_sha": "3257208d6034679ff57151f4117c3a745f78c038"
+    },
+    "later_audit": {
+      "commit": "8cdc019e36d54c981cfc5344f5a5851d8fabcfc2",
+      "local_checkout_updated_at": "2026-11-17T03:12:34-03:00"
+    },
+    "source": "User-supplied git reflog for develop plus GitHub PR merge history",
+    "limitation": "Git reflog proves local HEAD transitions, not the HEAD or working tree at each Python experiment invocation; exact original execution commit is unrecorded."
+  }
 }
